@@ -67,11 +67,20 @@ uint16_t previousServoPulse[] = {350, 350, 350, 350,
   #define BTBaud 9600  // HM-10, HM-19 etc
 #endif
 
+unsigned long previousMillis_BTN_Select = 0;
+const long interval_BTN_Select = 150;
+
+unsigned long previousMillis_SerialLine = 0;
+const long interval_SerialLine = 350;
+
+unsigned long previousMillis_writeToDisplay = 0;
+const long interval_writeToDisplay = 350;
 
 SoftwareSerial serialOutputLine(SERIAL_OUTPUT_LINE_TX, SERIAL_OUTPUT_LINE_RX);
 //create object
-EasyTransfer ET1;   // send serial
-EasyTransfer ET2;   // rec serial
+EasyTransfer serialLine; // send serial
+//EasyTransfer ET1;   // send serial
+//EasyTransfer ET2;   // rec serial
 
 TX_DATA_STRUCTURE mydata_send;
 RX_DATA_STRUCTURE mydata_remote;
@@ -105,8 +114,9 @@ void setup() {
 
   serialOutputLine.begin(BTBaud);
 
-    ET1.begin(details(mydata_send), &serialOutputLine);
-    ET2.begin(details(mydata_remote), &serialOutputLine);
+    serialLine.begin(details(mydata_send), &serialOutputLine);
+    //ET1.begin(details(mydata_send), &serialOutputLine);
+    //ET2.begin(details(mydata_remote), &serialOutputLine);
 
   pinMode(pot0, INPUT);
   pinMode(pot1, INPUT);
@@ -161,10 +171,15 @@ Serial.println("setup: Write initial servo positions (350 to start with)  2.for 
    Serial.println("setup:done. setup END.");
 }
 
+//-------------------------loop------------------------------------------------
+//-------------------------loop------------------------------------------------
+//-------------------------loop------------------------------------------------
+//-------------------------loop------------------------------------------------
 void loop() {
   
+  unsigned long currentMillis = millis();
   //Run function to see if buttons have been pressed, and pick a servo set accordingly
-  servoSetSelect();
+  loop_servoSet_BTN_Select(currentMillis);
 
   //Record the positions of all servos mapped to a pulsewidth of between 0 and 800
   servoPulse[(activeServoSet*4)+0] = map(analogRead(pot0), 0, 1023, 0, 800);
@@ -173,13 +188,15 @@ void loop() {
   servoPulse[(activeServoSet*4)+3] = map(analogRead(pot3), 0, 1023, 0, 800);
 
   //Clear the previous number, and write the new pulsewidths for the active servo set to the monitor
-  writePulses ();
+  loop_writePulsesToDisplay(currentMillis);
   /*
   previousServoPulse[(activeServoSet*4)+0] = servoPulse[(activeServoSet*4)+0];
   previousServoPulse[(activeServoSet*4)+1] = servoPulse[(activeServoSet*4)+1];
   previousServoPulse[(activeServoSet*4)+2] = servoPulse[(activeServoSet*4)+2];
   previousServoPulse[(activeServoSet*4)+3] = servoPulse[(activeServoSet*4)+3];
   */
+ loop_WriteToSerialLine(currentMillis);
+
   if(pwmAvailable) {
     //Using the servo driver board, set the active servos to the position  specified by the potentiometers
     pwm.setPWM((activeServoSet*4)+0, 0, servoPulse[(activeServoSet*4)+0]);
@@ -191,32 +208,44 @@ void loop() {
   //delay(150);
 }
 
+//-----loop_WriteToSerialLine--------------------------------------
+void loop_WriteToSerialLine(unsigned long currentMillis) {
+  if (currentMillis - previousMillis_SerialLine >= interval_SerialLine) {  // start timed event for read and send
+    previousMillis_SerialLine = currentMillis;
+    //ToDoHere;
+  }
+}
   
-void writePulses (){
+void loop_writePulsesToDisplay (unsigned long currentMillis){
+  if (currentMillis - previousMillis_writeToDisplay >= interval_writeToDisplay) {  // start timed event for read and send
+    previousMillis_writeToDisplay = currentMillis;
+
+    servoNum = 0;
+    yPos = 2 + (activeServoSet*40);
   
-  servoNum = 0;
-  yPos = 2 + (activeServoSet*40);
-  
-  //Serial.println("writePulses: for{...} start");
-  //if(previousServoPulse[(activeServoSet*4)+servoNum] != servoPulse[(activeServoSet*4)+servoNum]) {
-    for (uint8_t i = 0; i <=3; i ++){
-      char inChar[3];
+    //Serial.println("loop_writePulsesToDisplay: for{...} start");
+    //if(previousServoPulse[(activeServoSet*4)+servoNum] != servoPulse[(activeServoSet*4)+servoNum]) {
+      for (uint8_t i = 0; i <=3; i ++){
+        char inChar[3];
         dtostrf(servoPulse[(activeServoSet*4)+servoNum], 3, 0, inChar);
         tft.fillRect(58, yPos, 30, 8, BLACK);
         tft.drawString(60, yPos, inChar, YELLOW);
-        //Serial.print(" writePulses: yPos:"+String(yPos)+" , inChar:"+String(inChar)+". ");
+        //Serial.print(" loop_writePulsesToDisplay: yPos:"+String(yPos)+" , inChar:"+String(inChar)+". ");
         servoNum ++;
         yPos += spacing;    
-    }
-  //}
-  yPos += 8;
-  //Serial.println("writePulses: end");
+      }
+    //}
+    yPos += 8;
+    //Serial.println("loop_writePulsesToDisplay: end");
+  }
 }
 
-void servoSetSelect(){
-  
-  upButtonState = digitalRead(upButtonPin);
-  downButtonState = digitalRead(downButtonPin);
+void loop_servoSet_BTN_Select(unsigned long currentMillis){
+  if (currentMillis - previousMillis_BTN_Select >= interval_BTN_Select) {  // start timed event for read and send
+    previousMillis_BTN_Select = currentMillis;
+
+    upButtonState = digitalRead(upButtonPin);
+    downButtonState = digitalRead(downButtonPin);
 
     if (upButtonState == LOW){
        activeServoSet ++;
@@ -236,4 +265,6 @@ void servoSetSelect(){
         tft.drawString(95, ((activeServoSet*40)+3), "<", WHITE, 4);
         delay(150);
     }
+    //ToDoHere;
+  }
 }
