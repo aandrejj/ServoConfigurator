@@ -213,9 +213,40 @@ void loop_WriteToSerialLine(unsigned long currentMillis) {
   if (currentMillis - previousMillis_SerialLine >= interval_SerialLine) {  // start timed event for read and send
     previousMillis_SerialLine = currentMillis;
     //ToDoHere;
-  }
+    ReadHwData();
+    SerialLine_WriteEvent(currentMillis);
+  } // end of timed event send
 }
-  
+
+void ReadHwData() {
+  mydata_send.s00 = servoPulse[ 0];
+  mydata_send.s01 = servoPulse[ 1];
+  mydata_send.s02 = servoPulse[ 2];
+  mydata_send.s03 = servoPulse[ 3];
+  mydata_send.s04 = servoPulse[ 4];
+  mydata_send.s05 = servoPulse[ 5];
+  mydata_send.s06 = servoPulse[ 6];
+  mydata_send.s07 = servoPulse[ 7];
+  mydata_send.s08 = servoPulse[ 8];
+  mydata_send.s09 = servoPulse[ 9];
+  mydata_send.s10 = servoPulse[10];
+  mydata_send.s11 = servoPulse[11];
+  mydata_send.s12 = servoPulse[12];
+  mydata_send.s13 = servoPulse[13];
+  mydata_send.s14 = servoPulse[14];
+  mydata_send.s15 = servoPulse[15];
+}
+//------------------BtWriteEvent-------------------------------------
+
+void SerialLine_WriteEvent(unsigned long currentMillis) {
+    //bool dataSent = false; 
+    
+    //if(bluetooth_On){
+      //dataSent = true;
+      serialLine.sendData();
+    //}
+}
+
 void loop_writePulsesToDisplay (unsigned long currentMillis){
   if (currentMillis - previousMillis_writeToDisplay >= interval_writeToDisplay) {  // start timed event for read and send
     previousMillis_writeToDisplay = currentMillis;
