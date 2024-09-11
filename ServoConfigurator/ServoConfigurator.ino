@@ -1,4 +1,4 @@
-/*  Nilheim Mechatronics Servo Tester 
+/*  HW from Nilheim Mechatronics Servo Tester 
 *   Check nilheim.co.uk for wiring and 3D printing files
 *   
 *   Put the TFT18 folder from the download package in Documents > Arduino > Libraries
@@ -71,7 +71,7 @@ unsigned long previousMillis_BTN_Select = 0;
 const long interval_BTN_Select = 150;
 
 unsigned long previousMillis_SerialLine = 0;
-const long interval_SerialLine = 350;
+const long interval_SerialLine = 150;
 
 unsigned long previousMillis_writeToDisplay = 0;
 const long interval_writeToDisplay = 350;
