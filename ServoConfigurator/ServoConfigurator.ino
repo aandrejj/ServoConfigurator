@@ -56,8 +56,8 @@ uint16_t previousServoPulse[] = {350, 350, 350, 350,
                                  350, 350, 350, 350};
 */
 //#define HIGHSPEED 
-#define SERIAL_OUTPUT_LINE_RX 0  // Bluetooth RX -> Arduino D9
-#define SERIAL_OUTPUT_LINE_TX 1 // Bluetooth TX -> Arduino D10
+#define SERIAL_OUTPUT_LINE_RX 2  // Bluetooth RX -> Arduino D9
+#define SERIAL_OUTPUT_LINE_TX 3 // Bluetooth TX -> Arduino D10
 
 #ifdef HIGHSPEED
   #define Baud 38400   // Serial monitor
