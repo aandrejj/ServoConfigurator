@@ -1,4 +1,4 @@
-/*  Nilheim Mechatronics Servo Tester 
+/*  HW from Nilheim Mechatronics Servo Tester 
 *   Check nilheim.co.uk for wiring and 3D printing files
 *   
 *   Put the TFT18 folder from the download package in Documents > Arduino > Libraries
@@ -56,8 +56,8 @@ uint16_t previousServoPulse[] = {350, 350, 350, 350,
                                  350, 350, 350, 350};
 */
 //#define HIGHSPEED 
-#define SERIAL_OUTPUT_LINE_RX 0  // Bluetooth RX -> Arduino D9
-#define SERIAL_OUTPUT_LINE_TX 1 // Bluetooth TX -> Arduino D10
+#define SERIAL_OUTPUT_LINE_RX 2  // Bluetooth RX -> Arduino D9
+#define SERIAL_OUTPUT_LINE_TX 3 // Bluetooth TX -> Arduino D10
 
 #ifdef HIGHSPEED
   #define Baud 38400   // Serial monitor
@@ -71,7 +71,7 @@ unsigned long previousMillis_BTN_Select = 0;
 const long interval_BTN_Select = 150;
 
 unsigned long previousMillis_SerialLine = 0;
-const long interval_SerialLine = 350;
+const long interval_SerialLine = 150;
 
 unsigned long previousMillis_writeToDisplay = 0;
 const long interval_writeToDisplay = 350;
