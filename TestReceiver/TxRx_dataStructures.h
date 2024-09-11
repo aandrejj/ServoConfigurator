@@ -4,22 +4,22 @@ struct RX_DATA_STRUCTURE{
   
     int16_t mode;  
 
-    uint16_t s00;
-    uint16_t s01;
-    uint16_t s02;
-    uint16_t s03;
-    uint16_t s04;
-    uint16_t s05;
-    uint16_t s06;
-    uint16_t s07;
-    uint16_t s08;
-    uint16_t s09;
-    uint16_t s10;
-    uint16_t s11;
-    uint16_t s12;
-    uint16_t s13;
-    uint16_t s14;
-    uint16_t s15;
+    byte s00;
+    byte s01;
+    byte s02;
+    byte s03;
+    byte s04;
+    byte s05;
+    byte s06;
+    byte s07;
+    byte s08;
+    byte s09;
+    byte s10;
+    byte s11;
+    byte s12;
+    byte s13;
+    byte s14;
+    byte s15;
 };
 
 struct TX_DATA_STRUCTURE{

@@ -45,15 +45,15 @@ uint8_t upButtonState = 0;
 uint8_t downButtonState = 0;
 uint8_t activeServoSet = 0;
 bool pwmAvailable = false;
-uint16_t servoPulse[] =         {350, 350, 350, 350, 
-                                 350, 350, 350, 350, 
-                                 350, 350, 350, 350, 
-                                 350, 350, 350, 350};
+uint16_t servoPulse[] =         {127, 127, 127, 127, 
+                                 127, 127, 127, 127, 
+                                 127, 127, 127, 127, 
+                                 127, 127, 127, 127};
 /*
-uint16_t previousServoPulse[] = {350, 350, 350, 350, 
-                                 350, 350, 350, 350, 
-                                 350, 350, 350, 350, 
-                                 350, 350, 350, 350};
+uint16_t previousServoPulse[] = {127, 127, 127, 127, 
+                                 127, 127, 127, 127, 
+                                 127, 127, 127, 127, 
+                                 127, 127, 127, 127};
 */
 //#define HIGHSPEED 
 #define SERIAL_OUTPUT_LINE_RX 2  // Bluetooth RX -> Arduino D9
@@ -181,11 +181,11 @@ void loop() {
   //Run function to see if buttons have been pressed, and pick a servo set accordingly
   loop_servoSet_BTN_Select(currentMillis);
 
-  //Record the positions of all servos mapped to a pulsewidth of between 0 and 800
-  servoPulse[(activeServoSet*4)+0] = map(analogRead(pot0), 0, 1023, 0, 800);
-  servoPulse[(activeServoSet*4)+1] = map(analogRead(pot2), 0, 1023, 0, 800);
-  servoPulse[(activeServoSet*4)+2] = map(analogRead(pot1), 0, 1023, 0, 800);
-  servoPulse[(activeServoSet*4)+3] = map(analogRead(pot3), 0, 1023, 0, 800);
+  //Record the positions of all servos mapped to a pulsewidth of between 0 and 255
+  servoPulse[(activeServoSet*4)+0] = map(analogRead(pot0), 0, 1023, 0, 255);
+  servoPulse[(activeServoSet*4)+1] = map(analogRead(pot2), 0, 1023, 0, 255);
+  servoPulse[(activeServoSet*4)+2] = map(analogRead(pot1), 0, 1023, 0, 255);
+  servoPulse[(activeServoSet*4)+3] = map(analogRead(pot3), 0, 1023, 0, 255);
 
   //Clear the previous number, and write the new pulsewidths for the active servo set to the monitor
   loop_writePulsesToDisplay(currentMillis);
