@@ -45,19 +45,19 @@ uint8_t upButtonState = 0;
 uint8_t downButtonState = 0;
 uint8_t activeServoSet = 0;
 bool pwmAvailable = false;
-uint16_t servoPulse[] =         {350, 350, 350, 350, 
-                                 350, 350, 350, 350, 
-                                 350, 350, 350, 350, 
-                                 350, 350, 350, 350};
+byte servoPulse[] =         {127, 127, 127, 127, 
+                                 127, 127, 127, 127, 
+                                 127, 127, 127, 127, 
+                                 127, 127, 127, 127};
 /*
-uint16_t previousServoPulse[] = {350, 350, 350, 350, 
-                                 350, 350, 350, 350, 
-                                 350, 350, 350, 350, 
-                                 350, 350, 350, 350};
+byte previousServoPulse[] = {127, 127, 127, 127, 
+                                 127, 127, 127, 127, 
+                                 127, 127, 127, 127, 
+                                 127, 127, 127, 127};
 */
 //#define HIGHSPEED 
-#define SERIAL_OUTPUT_LINE_RX 2  // Bluetooth RX -> Arduino D9
-#define SERIAL_OUTPUT_LINE_TX 3 // Bluetooth TX -> Arduino D10
+#define SERIAL_OUTPUT_LINE_RX 0  // Bluetooth RX -> Arduino D9
+#define SERIAL_OUTPUT_LINE_TX 1 // Bluetooth TX -> Arduino D10
 
 #ifdef HIGHSPEED
   #define Baud 38400   // Serial monitor
@@ -74,7 +74,7 @@ unsigned long previousMillis_SerialLine = 0;
 const long interval_SerialLine = 150;
 
 unsigned long previousMillis_writeToDisplay = 0;
-const long interval_writeToDisplay = 350;
+const long interval_writeToDisplay = 200;
 
 SoftwareSerial serialOutputLine(SERIAL_OUTPUT_LINE_TX, SERIAL_OUTPUT_LINE_RX);
 //create object
@@ -149,8 +149,8 @@ void setup() {
     }
 Serial.println("setup: 1.for {for{}} done");
 
-Serial.println("setup: Write initial servo positions (350 to start with)  2.for {for{}} started");
-//Write initial servo positions (350 to start with)  
+Serial.println("setup: Write initial servo positions (127 to start with)  2.for {for{}} started");
+//Write initial servo positions (127 to start with)  
   servoNum = 0;
   yPos = 2;
   for (uint8_t count = 0; count <= 3; count ++){ 
@@ -181,11 +181,11 @@ void loop() {
   //Run function to see if buttons have been pressed, and pick a servo set accordingly
   loop_servoSet_BTN_Select(currentMillis);
 
-  //Record the positions of all servos mapped to a pulsewidth of between 0 and 800
-  servoPulse[(activeServoSet*4)+0] = map(analogRead(pot0), 0, 1023, 0, 800);
-  servoPulse[(activeServoSet*4)+1] = map(analogRead(pot2), 0, 1023, 0, 800);
-  servoPulse[(activeServoSet*4)+2] = map(analogRead(pot1), 0, 1023, 0, 800);
-  servoPulse[(activeServoSet*4)+3] = map(analogRead(pot3), 0, 1023, 0, 800);
+  //Record the positions of all servos mapped to a pulsewidth of between 0 and 255
+  servoPulse[(activeServoSet*4)+0] = map(analogRead(pot0), 0, 1023, 0, 255);
+  servoPulse[(activeServoSet*4)+1] = map(analogRead(pot2), 0, 1023, 0, 255);
+  servoPulse[(activeServoSet*4)+2] = map(analogRead(pot1), 0, 1023, 0, 255);
+  servoPulse[(activeServoSet*4)+3] = map(analogRead(pot3), 0, 1023, 0, 255);
 
   //Clear the previous number, and write the new pulsewidths for the active servo set to the monitor
   loop_writePulsesToDisplay(currentMillis);
