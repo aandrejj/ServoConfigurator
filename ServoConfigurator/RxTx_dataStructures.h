@@ -1,4 +1,4 @@
-struct RX_DATA_STRUCTURE{
+struct TX_DATA_STRUCTURE{
   //put your variable definitions here for the data you want to send
   //THIS MUST BE EXACTLY THE SAME ON THE OTHER ARDUINO
   
@@ -22,7 +22,7 @@ struct RX_DATA_STRUCTURE{
     uint16_t s15;
 };
 
-struct TX_DATA_STRUCTURE{
+struct RX_DATA_STRUCTURE{
   //put your variable definitions here for the data you want to receive
   //THIS MUST BE EXACTLY THE SAME ON THE OTHER ARDUINO
   int16_t mode;
