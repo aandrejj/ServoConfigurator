@@ -5,9 +5,18 @@
 *   Install Adafruit PWM servo driver library from the library manager (From inside arduino IDE > Tools > Manage Libraries > Search for "Adafruit PWM")
 */
 
+//#define USE_PWM_DRIVER;
+//#define USE_RF_REMOTE
+
+
+
 #include <Wire.h>
-#include <Adafruit_PWMServoDriver.h>
-#include <ST7735.h>
+
+#ifdef USE_PWM_DRIVER
+  #include <Adafruit_PWMServoDriver.h>
+#endif
+
+#include <ST7735_bw.h>
 #include <SPI.h>
 
 #include "EasyTransfer.h"
@@ -16,12 +25,21 @@
 
 
 #define OLED_RESET 4
+#define DISP_CS    6
+#define DISP_RS    7
+#define DISP_RST   8
+#define DISP_SID  11
+#define DISP_SCLK 13
 
   //           ST7735(uint8_t CS, uint8_t RS, uint8_t SID, uint8_t SCLK, uint8_t RST);
-  ST7735 tft = ST7735(         6,          7,          13,           11,           8); 
+  //ST7735 tft = ST7735(   DISP_CS,    DISP_RS,    DISP_SID,    DISP_SCLK,    DISP_RST); 
+ST7735 tft = ST7735(         6,          7,          11,           13,           8); 
   //           ST7735(uint8_t CS, uint8_t RS, uint8_t RST);
 //ST7735 tft = ST7735(6, 7, 8);    
-Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
+
+#ifdef USE_PWM_DRIVER
+  Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
+#endif
 
 //Pin Definitions
 #define pot0  A0
@@ -32,9 +50,15 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 #define downButtonPin  5
 
 // Color definitions
-#define BLACK           0x0000
-#define YELLOW          0xFFE0  
-#define WHITE           0xFFFF
+//#define BLACK           0x0000
+//#define YELLOW          0xFFE0  
+//#define WHITE           0xFFFF
+const uint16_t BLACK = 0x0000;
+const uint16_t WHITE = 0xffff;
+const uint16_t BLUE = 0x001f;
+const uint16_t RED = 0xf800;
+const uint16_t YELLOW = 0xffe0;
+const uint16_t GREEN = 0x07e0;
 
 uint8_t spacing = 8;
 uint8_t yPos = 2;
@@ -44,7 +68,9 @@ char colon[]=": ";
 uint8_t upButtonState = 0;
 uint8_t downButtonState = 0;
 uint8_t activeServoSet = 0;
-bool pwmAvailable = false;
+#ifdef USE_PWM_DRIVER
+  bool pwmAvailable = false;
+#endif
 uint16_t servoPulse[] =         {127, 127, 127, 127, 
                                  127, 127, 127, 127, 
                                  127, 127, 127, 127, 
@@ -64,7 +90,7 @@ uint16_t previousServoPulse[] = {127, 127, 127, 127,
   #define BTBaud 38400 // There is only one speed for configuring HC-05, and that is 38400.
 #else
   #define Baud 9600    // Serial monitor
-  #define BTBaud 9600  // HM-10, HM-19 etc
+  #define BTBaud 4800  // HM-10, HM-19 etc
 #endif
 
 unsigned long previousMillis_BTN_Select = 0;
@@ -97,20 +123,27 @@ void setup() {
   Serial.print("Uploaded: ");   Serial.println(__DATE__);
 
   Serial.println("setup: tft.initR()...");
-  tft.initR();  
+  tft.initR();
+  //tft.initR(INITR_BLACKTAB); 
+
+  //tft.pushColor(uint16_t color)
+  //tft.pushColor(tft.Color565(r,g,b));
+  //tft.fillScreen(BLACK);
   Serial.println("setup: done");
 
-  Serial.println("setup: pwd.begin()");
-  pwmAvailable = pwm.begin();
-  if(pwmAvailable) {
-    Serial.println("setup: OK PCA9685 PWM connected");
-  } else {
-    Serial.println("setup: Looks like PCA9685 PWM driver is NOT connected!!!");
-  }
+  #ifdef USE_PWM_DRIVER
+    Serial.println("setup: pwd.begin()");
+    pwmAvailable = pwm.begin();
+    if(pwmAvailable) {
+      Serial.println("setup: OK PCA9685 PWM connected");
+    } else {
+      Serial.println("setup: Looks like PCA9685 PWM driver is NOT connected!!!");
+    }
 
-  if(pwmAvailable) {
-    pwm.setPWMFreq(60); 
-  }
+    if(pwmAvailable) {
+      pwm.setPWMFreq(60); 
+    }
+#endif
 
   serialOutputLine.begin(BTBaud);
 
@@ -197,6 +230,7 @@ void loop() {
   */
  loop_WriteToSerialLine(currentMillis);
 
+#ifdef USE_PWM_DRIVER
   if(pwmAvailable) {
     //Using the servo driver board, set the active servos to the position  specified by the potentiometers
     pwm.setPWM((activeServoSet*4)+0, 0, servoPulse[(activeServoSet*4)+0]);
@@ -204,7 +238,7 @@ void loop() {
     pwm.setPWM((activeServoSet*4)+2, 0, servoPulse[(activeServoSet*4)+2]);
     pwm.setPWM((activeServoSet*4)+3, 0, servoPulse[(activeServoSet*4)+3]);
   }
-  
+#endif  
   //delay(150);
 }
 
