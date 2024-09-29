@@ -5,12 +5,20 @@
 *   Install Adafruit PWM servo driver library from the library manager (From inside arduino IDE > Tools > Manage Libraries > Search for "Adafruit PWM")
 */
 
-//#define USE_PWM_DRIVER;
+//#define USE_PWM_DRIVER
 //#define USE_RF_REMOTE
+//#define USE_WIRED_SERIAL
+//#define ANALOG_POTENTIOMENTERS_READ
+#define DIGITAL_ENCODERS_READ 
 
 
+#ifdef USE_WIRED_SERIAL
+  #include <Wire.h>
+#endif
 
-#include <Wire.h>
+#ifdef DIGITAL_ENCODERS_READ
+  #include <Encoder.h>  //  Encoder Library,  https://github.com/PaulStoffregen/Encoder ,  http://www.pjrc.com/teensy/td_libs_Encoder.html
+#endif
 
 #ifdef USE_PWM_DRIVER
   #include <Adafruit_PWMServoDriver.h>
@@ -19,8 +27,10 @@
 #include <ST7735_bw.h>
 #include <SPI.h>
 
-#include "EasyTransfer.h"
-#include "SoftwareSerial.h"
+#ifdef USE_WIRED_SERIAL
+  #include "EasyTransfer.h"
+  #include "SoftwareSerial.h"
+#endif
 #include "RxTx_dataStructures.h"
 
 
@@ -41,13 +51,65 @@ ST7735 tft = ST7735(         6,          7,          11,           13,          
   Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 #endif
 
-//Pin Definitions
-#define pot0  A0
-#define pot1  A1
-#define pot2  A2
-#define pot3  A3
-#define upButtonPin  9
-#define downButtonPin  5
+#ifdef ANALOG_POTENTIOMENTERS_READ
+  //Pin Definitions
+  #define pot0  A0
+  #define pot1  A1
+  #define pot2  A2
+  #define pot3  A3
+  #define upButtonPin  9
+  #define downButtonPin  5
+#endif
+
+#ifdef DIGITAL_ENCODERS_READ
+  #define ANALOG_BUTTON_UP   A0
+  #define ANALOG_BUTTON_DOWN A1
+
+  #define ROTARY_ENCODER1_PIN1 1
+  #define ROTARY_ENCODER1_PIN2 0
+  //#define ROTARY_ENCODER1_KEY  4
+
+  #define ROTARY_ENCODER2_PIN1 3
+  #define ROTARY_ENCODER2_PIN2 2
+  //#define ROTARY_ENCODER2_KEY  4
+  #define ROTARY_ENCODER3_PIN1 10
+  #define ROTARY_ENCODER3_PIN2 9
+  //#define ROTARY_ENCODER3_KEY  4
+  #define ROTARY_ENCODER4_PIN1 5
+  #define ROTARY_ENCODER4_PIN2 4
+  //#define ROTARY_ENCODER4_KEY  4
+  
+  // Change these two numbers to the pins connected to your encoder.
+  //   Best Performance: both pins have interrupt capability
+  //   Good Performance: only the first pin has interrupt capability
+  //   Low Performance:  neither pin has interrupt capability
+  Encoder myEnc1(ROTARY_ENCODER1_PIN1, ROTARY_ENCODER1_PIN2);
+  Encoder myEnc2(ROTARY_ENCODER2_PIN1, ROTARY_ENCODER2_PIN2);
+  Encoder myEnc3(ROTARY_ENCODER3_PIN1, ROTARY_ENCODER3_PIN2);
+  Encoder myEnc4(ROTARY_ENCODER4_PIN1, ROTARY_ENCODER4_PIN2);
+  
+  long newPosition1 =0;
+  long newPosition2 =0;
+  long newPosition3 =0;
+  long newPosition4 =0;
+  
+  long oldPosition1  = -999;
+  long oldPosition2  = -999;
+  long oldPosition3  = -999;
+  long oldPosition4  = -999;
+
+  long oldEncoderPosition1 =-999;
+  long newEncoderPosition1 = 255;
+
+  long oldEncoderPosition2 =-999;
+  long newEncoderPosition2 = 255;
+
+  long oldEncoderPosition3 =-999;
+  long newEncoderPosition3 = 255;
+
+  long oldEncoderPosition4 =-999;
+  long newEncoderPosition4 = 255;
+#endif
 
 // Color definitions
 //#define BLACK           0x0000
@@ -82,8 +144,10 @@ uint16_t previousServoPulse[] = {127, 127, 127, 127,
                                  127, 127, 127, 127};
 */
 //#define HIGHSPEED 
-#define SERIAL_OUTPUT_LINE_RX 2  // Bluetooth RX -> Arduino D9
-#define SERIAL_OUTPUT_LINE_TX 3 // Bluetooth TX -> Arduino D10
+#ifdef USE_WIRED_SERIAL
+  #define SERIAL_OUTPUT_LINE_RX 2  // Bluetooth RX -> Arduino D9
+  #define SERIAL_OUTPUT_LINE_TX 3 // Bluetooth TX -> Arduino D10
+#endif
 
 #ifdef HIGHSPEED
   #define Baud 38400   // Serial monitor
@@ -102,11 +166,13 @@ const long interval_SerialLine = 150;
 unsigned long previousMillis_writeToDisplay = 0;
 const long interval_writeToDisplay = 350;
 
-SoftwareSerial serialOutputLine(SERIAL_OUTPUT_LINE_TX, SERIAL_OUTPUT_LINE_RX);
-//create object
-EasyTransfer serialLine; // send serial
-//EasyTransfer ET1;   // send serial
-//EasyTransfer ET2;   // rec serial
+#ifdef USE_WIRED_SERIAL
+  SoftwareSerial serialOutputLine(SERIAL_OUTPUT_LINE_TX, SERIAL_OUTPUT_LINE_RX);
+  //create object
+  EasyTransfer serialLine; // send serial
+  //EasyTransfer ET1;   // send serial
+  //EasyTransfer ET2;   // rec serial
+#endif
 
 TX_DATA_STRUCTURE mydata_send;
 RX_DATA_STRUCTURE mydata_remote;
@@ -143,21 +209,25 @@ void setup() {
     if(pwmAvailable) {
       pwm.setPWMFreq(60); 
     }
-#endif
+  #endif
 
-  serialOutputLine.begin(BTBaud);
+  #ifdef USE_WIRED_SERIAL
+    serialOutputLine.begin(BTBaud);
 
     serialLine.begin(details(mydata_send), &serialOutputLine);
     //ET1.begin(details(mydata_send), &serialOutputLine);
     //ET2.begin(details(mydata_remote), &serialOutputLine);
+  #endif
 
-  pinMode(pot0, INPUT);
-  pinMode(pot1, INPUT);
-  pinMode(pot2, INPUT);
-  pinMode(pot3, INPUT);
-  
-  pinMode(  upButtonPin, INPUT_PULLUP);
-  pinMode(downButtonPin, INPUT_PULLUP);
+  #ifdef ANALOG_POTENTIOMENTERS_READ
+    pinMode(pot0, INPUT);
+    pinMode(pot1, INPUT);
+    pinMode(pot2, INPUT);
+    pinMode(pot3, INPUT);
+
+    pinMode(  upButtonPin, INPUT_PULLUP);
+    pinMode(downButtonPin, INPUT_PULLUP);
+  #endif
 
 //Set background colour
   Serial.println("setup: tft.fillScreen(BLACK)");
@@ -191,7 +261,7 @@ Serial.println("setup: Write initial servo positions (350 to start with)  2.for 
       char numRead[3];
       dtostrf(servoPulse[servoNum], 3, 0, numRead);
       tft.drawString(60, yPos, numRead, YELLOW);
-      Serial.println("setup: y:"+String(yPos)+", numRead:"+String(numRead)+", count:"+String(count)+", i:"+String(i)+".");
+      //Serial.println("setup: y:"+String(yPos)+", numRead:"+String(numRead)+", count:"+String(count)+", i:"+String(i)+".");
       servoNum ++;
       yPos += spacing;    
       }
@@ -204,6 +274,7 @@ Serial.println("setup: Write initial servo positions (350 to start with)  2.for 
    Serial.println("setup:done. setup END.");
 }
 
+
 //-------------------------loop------------------------------------------------
 //-------------------------loop------------------------------------------------
 //-------------------------loop------------------------------------------------
@@ -213,12 +284,108 @@ void loop() {
   unsigned long currentMillis = millis();
   //Run function to see if buttons have been pressed, and pick a servo set accordingly
   loop_servoSet_BTN_Select(currentMillis);
+  #ifdef ANALOG_POTENTIOMENTERS_READ
+    //Record the positions of all servos mapped to a pulsewidth of between 0 and 255
+    servoPulse[(activeServoSet*4)+0] = map(analogRead(pot0), 0, 1023, 0, 255);
+    servoPulse[(activeServoSet*4)+1] = map(analogRead(pot2), 0, 1023, 0, 255);
+    servoPulse[(activeServoSet*4)+2] = map(analogRead(pot1), 0, 1023, 0, 255);
+    servoPulse[(activeServoSet*4)+3] = map(analogRead(pot3), 0, 1023, 0, 255);
+  #endif
+  #ifdef DIGITAL_ENCODERS_READ
+    ////Read endoders and compute values for all servos.
+    ////rotary encoder handling
+    //--------------------------------------------------------------------------
+    newPosition1 = myEnc1.read();
+    if (newPosition1 != oldPosition1) {
+      oldPosition1 = newPosition1;
+      //Serial.println("encoder newPosition1 = "+String(newPosition1));
+      newEncoderPosition1 = (newPosition1/2);
+      if(oldEncoderPosition1 != newEncoderPosition1) {
+        Serial.println("newEncoderPosition1 "+String(newEncoderPosition1));
+        if(newEncoderPosition1 < oldEncoderPosition1) {
+          if(servoPulse[(activeServoSet*4)+0]<255){
+            servoPulse[(activeServoSet*4)+0] =servoPulse[(activeServoSet*4)+0] +1;
+          }
+        }
+        if(newEncoderPosition1 > oldEncoderPosition1) {
+          if(servoPulse[(activeServoSet*4)+0]>0){
+            servoPulse[(activeServoSet*4)+0] =servoPulse[(activeServoSet*4)+0] -1;
+          }
+        }
+        oldEncoderPosition1 = newEncoderPosition1;
+      }//if(oldEncoderPosition != newEncoderPosition)
+    }
+    //--------------------------------------------------------------------------
+    newPosition2 = myEnc2.read();
+    if (newPosition2 != oldPosition2) {
+      oldPosition2 = newPosition2;
+      //Serial.println("encoder newPosition2 = "+String(newPosition2));
+      newEncoderPosition2 = (newPosition2/2);
+      if(oldEncoderPosition2 != newEncoderPosition2) {
+        Serial.println("newEncoderPosition2 "+String(newEncoderPosition2));
+        if(newEncoderPosition2 < oldEncoderPosition2) {
+          if(servoPulse[(activeServoSet*4)+1]<255){
+            servoPulse[(activeServoSet*4)+1] =servoPulse[(activeServoSet*4)+1] +1;
+          }
+        }
+        if(newEncoderPosition2 > oldEncoderPosition2) {
+          if(servoPulse[(activeServoSet*4)+1]>0){
+            servoPulse[(activeServoSet*4)+1] =servoPulse[(activeServoSet*4)+1] -1;
+          }
+        }
+        oldEncoderPosition2 = newEncoderPosition2;
+      }//if(oldEncoderPosition != newEncoderPosition)
+    }
+    //--------------------------------------------------------------------------
+    newPosition3 = myEnc3.read();
+    if (newPosition3 != oldPosition3) {
+      oldPosition3 = newPosition3;
+      //Serial.println("encoder newPosition3 = "+String(newPosition3));
+      newEncoderPosition3 = (newPosition3/2);
+      if(oldEncoderPosition3 != newEncoderPosition3) {
+        Serial.println("newEncoderPosition3 "+String(newEncoderPosition3));
+        if(newEncoderPosition3 < oldEncoderPosition3) {
+          if(servoPulse[(activeServoSet*4)+2]<255){
+            servoPulse[(activeServoSet*4)+2] =servoPulse[(activeServoSet*4)+2] +1;
+          }
+        }
+        if(newEncoderPosition3 > oldEncoderPosition3) {
+          if(servoPulse[(activeServoSet*4)+2]>0){
+            servoPulse[(activeServoSet*4)+2] =servoPulse[(activeServoSet*4)+2] -1;
+          }
+        }
+        oldEncoderPosition3 = newEncoderPosition3;
+      }//if(oldEncoderPosition != newEncoderPosition)
+    }
+    //--------------------------------------------------------------------------
+    newPosition4 = myEnc4.read();
+    if (newPosition4 != oldPosition4) {
+      oldPosition4 = newPosition4;
+      //Serial.println("encoder newPosition4 = "+String(newPosition4));
+      newEncoderPosition4 = (newPosition4/2);
+      if(oldEncoderPosition4 != newEncoderPosition4) {
+        Serial.println("newEncoderPosition4 "+String(newEncoderPosition4));
+        if(newEncoderPosition4 < oldEncoderPosition4) {
+          if(servoPulse[(activeServoSet*4)+3]<255){
+            servoPulse[(activeServoSet*4)+3] =servoPulse[(activeServoSet*4)+3] +1;
+          }
+        }
+        if(newEncoderPosition4 > oldEncoderPosition4) {
+          if(servoPulse[(activeServoSet*4)+3]>0){
+            servoPulse[(activeServoSet*4)+3] =servoPulse[(activeServoSet*4)+3] -1;
+          }
+        }
+        oldEncoderPosition4 = newEncoderPosition4;
+      }//if(oldEncoderPosition != newEncoderPosition)
+    }
+    //--------------------------------------------------------------------------
 
-  //Record the positions of all servos mapped to a pulsewidth of between 0 and 255
-  servoPulse[(activeServoSet*4)+0] = map(analogRead(pot0), 0, 1023, 0, 255);
-  servoPulse[(activeServoSet*4)+1] = map(analogRead(pot2), 0, 1023, 0, 255);
-  servoPulse[(activeServoSet*4)+2] = map(analogRead(pot1), 0, 1023, 0, 255);
-  servoPulse[(activeServoSet*4)+3] = map(analogRead(pot3), 0, 1023, 0, 255);
+    //servoPulse[(activeServoSet*4)+0] = map(analogRead(pot0), 0, 1023, 0, 255);
+    //servoPulse[(activeServoSet*4)+1] = map(analogRead(pot2), 0, 1023, 0, 255);
+    //servoPulse[(activeServoSet*4)+2] = map(analogRead(pot1), 0, 1023, 0, 255);
+    //servoPulse[(activeServoSet*4)+3] = map(analogRead(pot3), 0, 1023, 0, 255);
+
+  #endif
 
   //Clear the previous number, and write the new pulsewidths for the active servo set to the monitor
   loop_writePulsesToDisplay(currentMillis);
@@ -228,7 +395,9 @@ void loop() {
   previousServoPulse[(activeServoSet*4)+2] = servoPulse[(activeServoSet*4)+2];
   previousServoPulse[(activeServoSet*4)+3] = servoPulse[(activeServoSet*4)+3];
   */
- loop_WriteToSerialLine(currentMillis);
+  #ifdef USE_WIRED_SERIAL
+    loop_WriteToSerialLine(currentMillis);
+  #endif
 
 #ifdef USE_PWM_DRIVER
   if(pwmAvailable) {
@@ -248,7 +417,9 @@ void loop_WriteToSerialLine(unsigned long currentMillis) {
     previousMillis_SerialLine = currentMillis;
     //ToDoHere;
     ReadHwData();
-    SerialLine_WriteEvent(currentMillis);
+    #ifdef USE_WIRED_SERIAL
+      SerialLine_WriteEvent(currentMillis);
+    #endif
   } // end of timed event send
 }
 
@@ -273,12 +444,14 @@ void ReadHwData() {
 //------------------BtWriteEvent-------------------------------------
 
 void SerialLine_WriteEvent(unsigned long currentMillis) {
+  #ifdef USE_WIRED_SERIAL
     //bool dataSent = false; 
     
     //if(bluetooth_On){
       //dataSent = true;
       serialLine.sendData();
     //}
+  #endif
 }
 
 void loop_writePulsesToDisplay (unsigned long currentMillis){
@@ -308,10 +481,16 @@ void loop_writePulsesToDisplay (unsigned long currentMillis){
 void loop_servoSet_BTN_Select(unsigned long currentMillis){
   if (currentMillis - previousMillis_BTN_Select >= interval_BTN_Select) {  // start timed event for read and send
     previousMillis_BTN_Select = currentMillis;
-
-    upButtonState = digitalRead(upButtonPin);
-    downButtonState = digitalRead(downButtonPin);
-
+    #ifdef ANALOG_POTENTIOMENTERS_READ
+      upButtonState = digitalRead(upButtonPin);
+      downButtonState = digitalRead(downButtonPin);
+    #endif
+    #ifdef DIGITAL_ENCODERS_READ
+      //upButtonState = digitalRead(upButtonPin);
+      //downButtonState = digitalRead(downButtonPin);
+        upButtonState = (analogRead(ANALOG_BUTTON_UP  )>127 ? HIGH : LOW);
+      downButtonState = (analogRead(ANALOG_BUTTON_DOWN)>127 ? HIGH : LOW);
+    #endif
     if (upButtonState == LOW){
        activeServoSet ++;
        if (activeServoSet >3){
