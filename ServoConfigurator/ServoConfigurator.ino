@@ -395,6 +395,11 @@ void loop() {
   previousServoPulse[(activeServoSet*4)+2] = servoPulse[(activeServoSet*4)+2];
   previousServoPulse[(activeServoSet*4)+3] = servoPulse[(activeServoSet*4)+3];
   */
+  
+  #ifdef USE_RF_REMOTE
+    loop_WriteTo_RF_Line(currentMillis);
+  #endif
+
   #ifdef USE_WIRED_SERIAL
     loop_WriteToSerialLine(currentMillis);
   #endif
@@ -410,7 +415,17 @@ void loop() {
 #endif  
   //delay(150);
 }
-
+//-----loop_WriteTo_RF_Line----------------------------------------
+void loop_WriteTo_RF_Line (unsigned long currentMillis) {
+  if (currentMillis - previousMillis_SerialLine >= interval_SerialLine) {  // start timed event for read and send
+    previousMillis_SerialLine = currentMillis;
+    //ToDoHere;
+    ReadHwData();
+    #ifdef USE_RF_REMOTE
+      RF_Line_WriteEvent(currentMillis);
+    #endif
+  } // end of timed event send
+}
 //-----loop_WriteToSerialLine--------------------------------------
 void loop_WriteToSerialLine(unsigned long currentMillis) {
   if (currentMillis - previousMillis_SerialLine >= interval_SerialLine) {  // start timed event for read and send
@@ -442,6 +457,12 @@ void ReadHwData() {
   mydata_send.s15 = servoPulse[15];
 }
 //------------------BtWriteEvent-------------------------------------
+void RF_Line_WriteEvent (unsigned long currentMillis) {
+  #ifdef USE_RF_REMOTE
+    //serialLine.sendData();
+  #endif
+}
+
 
 void SerialLine_WriteEvent(unsigned long currentMillis) {
   #ifdef USE_WIRED_SERIAL
