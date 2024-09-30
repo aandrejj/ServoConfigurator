@@ -6,7 +6,7 @@
 */
 
 //#define USE_PWM_DRIVER
-//#define USE_RF_REMOTE
+#define USE_RF_REMOTE
 //#define USE_WIRED_SERIAL
 //#define ANALOG_POTENTIOMENTERS_READ
 #define DIGITAL_ENCODERS_READ 
@@ -31,6 +31,12 @@
   #include "EasyTransfer.h"
   #include "SoftwareSerial.h"
 #endif
+
+#ifdef USE_RF_REMOTE
+  #include <nRF24L01.h>
+  #include <RF24.h>
+#endif
+
 #include "RxTx_dataStructures.h"
 
 
@@ -174,6 +180,12 @@ const long interval_writeToDisplay = 350;
   //EasyTransfer ET2;   // rec serial
 #endif
 
+#ifdef USE_RF_REMOTE
+  const uint64_t my_radio_pipe = 0x0022; //toto istý kod musí mať aj primač
+  RF24 radio(10, 9);  //zapojenie CE a CSN pinov
+  //maximalne 32 kanalov
+#endif
+
 TX_DATA_STRUCTURE mydata_send;
 RX_DATA_STRUCTURE mydata_remote;
 
@@ -217,6 +229,13 @@ void setup() {
     serialLine.begin(details(mydata_send), &serialOutputLine);
     //ET1.begin(details(mydata_send), &serialOutputLine);
     //ET2.begin(details(mydata_remote), &serialOutputLine);
+  #endif
+
+  #ifdef USE_RF_REMOTE
+    radio.begin();
+    radio.setAutoAck(false);
+    radio.setDataRate(RF24_250KBPS);
+    radio.openWritingPipe(my_radio_pipe);
   #endif
 
   #ifdef ANALOG_POTENTIOMENTERS_READ
@@ -459,7 +478,7 @@ void ReadHwData() {
 //------------------BtWriteEvent-------------------------------------
 void RF_Line_WriteEvent (unsigned long currentMillis) {
   #ifdef USE_RF_REMOTE
-    //serialLine.sendData();
+    radio.write(&mydata_send, sizeof(TX_DATA_STRUCTURE));
   #endif
 }
 
