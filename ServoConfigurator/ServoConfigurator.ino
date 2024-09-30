@@ -65,8 +65,8 @@ ST7735 tft = ST7735(         6,          7,          11,           13,          
   #define ANALOG_BUTTON_UP   A0
   #define ANALOG_BUTTON_DOWN A1
 
-  #define ROTARY_ENCODER1_PIN1 1
-  #define ROTARY_ENCODER1_PIN2 0
+  #define ROTARY_ENCODER1_PIN1 A2
+  #define ROTARY_ENCODER1_PIN2 A3
   //#define ROTARY_ENCODER1_KEY  4
 
   #define ROTARY_ENCODER2_PIN1 3
@@ -97,7 +97,7 @@ ST7735 tft = ST7735(         6,          7,          11,           13,          
   long oldPosition2  = -999;
   long oldPosition3  = -999;
   long oldPosition4  = -999;
-
+  
   long oldEncoderPosition1 =-999;
   long newEncoderPosition1 = 255;
 
@@ -299,7 +299,7 @@ void loop() {
     if (newPosition1 != oldPosition1) {
       oldPosition1 = newPosition1;
       //Serial.println("encoder newPosition1 = "+String(newPosition1));
-      newEncoderPosition1 = (newPosition1/2);
+      newEncoderPosition1 = (newPosition1/4);
       if(oldEncoderPosition1 != newEncoderPosition1) {
         Serial.println("newEncoderPosition1 "+String(newEncoderPosition1));
         if(newEncoderPosition1 < oldEncoderPosition1) {
@@ -320,7 +320,7 @@ void loop() {
     if (newPosition2 != oldPosition2) {
       oldPosition2 = newPosition2;
       //Serial.println("encoder newPosition2 = "+String(newPosition2));
-      newEncoderPosition2 = (newPosition2/2);
+      newEncoderPosition2 = (newPosition2/4);
       if(oldEncoderPosition2 != newEncoderPosition2) {
         Serial.println("newEncoderPosition2 "+String(newEncoderPosition2));
         if(newEncoderPosition2 < oldEncoderPosition2) {
@@ -341,7 +341,7 @@ void loop() {
     if (newPosition3 != oldPosition3) {
       oldPosition3 = newPosition3;
       //Serial.println("encoder newPosition3 = "+String(newPosition3));
-      newEncoderPosition3 = (newPosition3/2);
+      newEncoderPosition3 = (newPosition3/4);
       if(oldEncoderPosition3 != newEncoderPosition3) {
         Serial.println("newEncoderPosition3 "+String(newEncoderPosition3));
         if(newEncoderPosition3 < oldEncoderPosition3) {
@@ -362,7 +362,7 @@ void loop() {
     if (newPosition4 != oldPosition4) {
       oldPosition4 = newPosition4;
       //Serial.println("encoder newPosition4 = "+String(newPosition4));
-      newEncoderPosition4 = (newPosition4/2);
+      newEncoderPosition4 = (newPosition4/4);
       if(oldEncoderPosition4 != newEncoderPosition4) {
         Serial.println("newEncoderPosition4 "+String(newEncoderPosition4));
         if(newEncoderPosition4 < oldEncoderPosition4) {
