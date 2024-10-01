@@ -78,8 +78,8 @@ ST7735 tft = ST7735(         6,          7,          11,           13,          
   #define ROTARY_ENCODER2_PIN1 3
   #define ROTARY_ENCODER2_PIN2 2
   //#define ROTARY_ENCODER2_KEY  4
-  #define ROTARY_ENCODER3_PIN1 10
-  #define ROTARY_ENCODER3_PIN2 9
+  #define ROTARY_ENCODER3_PIN1 A4
+  #define ROTARY_ENCODER3_PIN2 A5
   //#define ROTARY_ENCODER3_KEY  4
   #define ROTARY_ENCODER4_PIN1 5
   #define ROTARY_ENCODER4_PIN2 4
