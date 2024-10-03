@@ -24,7 +24,7 @@
   #include <Adafruit_PWMServoDriver.h>
 #endif
 
-#include <ST7735_bw.h>
+#include <ST7735.h>
 #include <SPI.h>
 
 #ifdef USE_WIRED_SERIAL
@@ -483,6 +483,7 @@ void ReadHwData() {
   mydata_send.s13 = servoPulse[13];
   mydata_send.s14 = servoPulse[14];
   mydata_send.s15 = servoPulse[15];
+  mydata_send.mode =  1; // mode:  0 = fourSticksController (8 chanels) ,   1 = ServoConfigurator (16 chanels) , 3 = ?
 }
 //------------------BtWriteEvent-------------------------------------
 void RF_Line_WriteEvent (unsigned long currentMillis) {
