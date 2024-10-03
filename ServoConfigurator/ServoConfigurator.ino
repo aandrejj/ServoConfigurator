@@ -8,8 +8,8 @@
 //#define USE_PWM_DRIVER
 #define USE_RF_REMOTE
 //#define USE_WIRED_SERIAL
-//#define ANALOG_POTENTIOMENTERS_READ
-#define DIGITAL_ENCODERS_READ 
+#define ANALOG_POTENTIOMENTERS_READ
+//#define DIGITAL_ENCODERS_READ 
 
 
 #ifdef USE_WIRED_SERIAL
@@ -40,16 +40,16 @@
 #include "RxTx_dataStructures.h"
 
 
-#define OLED_RESET 4
+//#define OLED_RESET 4
 #define DISP_CS    6
 #define DISP_RS    7
 #define DISP_RST   8
-#define DISP_SID  11
-#define DISP_SCLK 13
+#define DISP_SID   4
+#define DISP_SCLK  5
 
   //           ST7735(uint8_t CS, uint8_t RS, uint8_t SID, uint8_t SCLK, uint8_t RST);
-  //ST7735 tft = ST7735(   DISP_CS,    DISP_RS,    DISP_SID,    DISP_SCLK,    DISP_RST); 
-ST7735 tft = ST7735(         6,          7,          11,           13,           8); 
+  ST7735 tft = ST7735(   DISP_CS,    DISP_RS,    DISP_SID,    DISP_SCLK,    DISP_RST); 
+//ST7735 tft = ST7735(         6,          7,          11,           13,           8); 
   //           ST7735(uint8_t CS, uint8_t RS, uint8_t RST);
 //ST7735 tft = ST7735(6, 7, 8);    
 
@@ -60,11 +60,12 @@ ST7735 tft = ST7735(         6,          7,          11,           13,          
 #ifdef ANALOG_POTENTIOMENTERS_READ
   //Pin Definitions
   #define pot0  A0
-  #define pot1  A1
-  #define pot2  A2
+  #define pot1  A2
+  #define pot2  A1
   #define pot3  A3
-  #define upButtonPin  9
-  #define downButtonPin  5
+  #define upButtonPin  A4
+  #define downButtonPin  A5
+
 #endif
 
 #ifdef DIGITAL_ENCODERS_READ
@@ -181,7 +182,7 @@ const long interval_writeToDisplay = 350;
 #endif
 
 #ifdef USE_RF_REMOTE
-  const uint64_t my_radio_pipe = 0x0022; //toto istý kod musí mať aj primač
+  const uint64_t my_radio_pipe = 0x0022; //tento istý kód musí mať aj prijímač
   RF24 radio(10, 9);  //zapojenie CE a CSN pinov
   //maximalne 32 kanalov
 #endif
@@ -231,21 +232,14 @@ void setup() {
     //ET2.begin(details(mydata_remote), &serialOutputLine);
   #endif
 
-  #ifdef USE_RF_REMOTE
-    radio.begin();
-    radio.setAutoAck(false);
-    radio.setDataRate(RF24_250KBPS);
-    radio.openWritingPipe(my_radio_pipe);
-  #endif
-
   #ifdef ANALOG_POTENTIOMENTERS_READ
     pinMode(pot0, INPUT);
     pinMode(pot1, INPUT);
     pinMode(pot2, INPUT);
     pinMode(pot3, INPUT);
 
-    pinMode(  upButtonPin, INPUT_PULLUP);
-    pinMode(downButtonPin, INPUT_PULLUP);
+    pinMode(  upButtonPin, INPUT); //INPUT_PULLUP);
+    pinMode(downButtonPin, INPUT); // INPUT_PULLUP);
   #endif
 
 //Set background colour
@@ -289,8 +283,22 @@ Serial.println("setup: Write initial servo positions (350 to start with)  2.for 
   Serial.println("setup: 2.for {for{}} done");
 
    tft.drawString(95, 3, "<", WHITE, 4);
+  
+  //------------------
+  #ifdef USE_RF_REMOTE
+    Serial.println("setup: radio.begin()....");
+    radio.begin();
+    Serial.println("setup: radio.setAutoAck(f)");
+    radio.setAutoAck(false);
+    Serial.println("setup: radio.setDataRate(RF24_250KBPS)");
+    radio.setDataRate(RF24_250KBPS);
+    Serial.println("setup: radio.openWritingPipe(my_radio_pipe)");
+    radio.openWritingPipe(my_radio_pipe);
+    Serial.println("setup: radio - OK.  radio - end");
+  #endif
 
    Serial.println("setup:done. setup END.");
+   Serial.println("starting loop.... ");
 }
 
 
@@ -305,11 +313,12 @@ void loop() {
   loop_servoSet_BTN_Select(currentMillis);
   #ifdef ANALOG_POTENTIOMENTERS_READ
     //Record the positions of all servos mapped to a pulsewidth of between 0 and 255
-    servoPulse[(activeServoSet*4)+0] = map(analogRead(pot0), 0, 1023, 0, 255);
-    servoPulse[(activeServoSet*4)+1] = map(analogRead(pot2), 0, 1023, 0, 255);
-    servoPulse[(activeServoSet*4)+2] = map(analogRead(pot1), 0, 1023, 0, 255);
-    servoPulse[(activeServoSet*4)+3] = map(analogRead(pot3), 0, 1023, 0, 255);
+    servoPulse[(activeServoSet*4)+0] = map(analogRead(pot0), 0, 1023, 255, 0);
+    servoPulse[(activeServoSet*4)+1] = map(analogRead(pot2), 0, 1023, 255, 0);
+    servoPulse[(activeServoSet*4)+2] = map(analogRead(pot1), 0, 1023, 255, 0);
+    servoPulse[(activeServoSet*4)+3] = map(analogRead(pot3), 0, 1023, 255, 0);
   #endif
+
   #ifdef DIGITAL_ENCODERS_READ
     ////Read endoders and compute values for all servos.
     ////rotary encoder handling
