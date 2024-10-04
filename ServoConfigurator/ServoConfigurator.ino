@@ -7,14 +7,9 @@
 
 //#define USE_PWM_DRIVER
 #define USE_RF_REMOTE
-//#define USE_WIRED_SERIAL
 #define ANALOG_POTENTIOMENTERS_READ
 //#define DIGITAL_ENCODERS_READ 
 
-
-#ifdef USE_WIRED_SERIAL
-  #include <Wire.h>
-#endif
 
 #ifdef DIGITAL_ENCODERS_READ
   #include <Encoder.h>  //  Encoder Library,  https://github.com/PaulStoffregen/Encoder ,  http://www.pjrc.com/teensy/td_libs_Encoder.html
@@ -26,11 +21,6 @@
 
 #include <ST7735.h>
 #include <SPI.h>
-
-#ifdef USE_WIRED_SERIAL
-  #include "EasyTransfer.h"
-  #include "SoftwareSerial.h"
-#endif
 
 #ifdef USE_RF_REMOTE
   #include <nRF24L01.h>
@@ -144,17 +134,8 @@ uint16_t servoPulse[] =         {127, 127, 127, 127,
                                  127, 127, 127, 127, 
                                  127, 127, 127, 127, 
                                  127, 127, 127, 127};
-/*
-uint16_t previousServoPulse[] = {127, 127, 127, 127, 
-                                 127, 127, 127, 127, 
-                                 127, 127, 127, 127, 
-                                 127, 127, 127, 127};
-*/
+
 //#define HIGHSPEED 
-#ifdef USE_WIRED_SERIAL
-  #define SERIAL_OUTPUT_LINE_RX 2  // Bluetooth RX -> Arduino D9
-  #define SERIAL_OUTPUT_LINE_TX 3 // Bluetooth TX -> Arduino D10
-#endif
 
 #ifdef HIGHSPEED
   #define Baud 38400   // Serial monitor
@@ -172,14 +153,6 @@ const long interval_SerialLine = 150;
 
 unsigned long previousMillis_writeToDisplay = 0;
 const long interval_writeToDisplay = 350;
-
-#ifdef USE_WIRED_SERIAL
-  SoftwareSerial serialOutputLine(SERIAL_OUTPUT_LINE_TX, SERIAL_OUTPUT_LINE_RX);
-  //create object
-  EasyTransfer serialLine; // send serial
-  //EasyTransfer ET1;   // send serial
-  //EasyTransfer ET2;   // rec serial
-#endif
 
 #ifdef USE_RF_REMOTE
   const uint64_t my_radio_pipe = 0x0022; //tento istý kód musí mať aj prijímač
@@ -222,14 +195,6 @@ void setup() {
     if(pwmAvailable) {
       pwm.setPWMFreq(60); 
     }
-  #endif
-
-  #ifdef USE_WIRED_SERIAL
-    serialOutputLine.begin(BTBaud);
-
-    serialLine.begin(details(mydata_send), &serialOutputLine);
-    //ET1.begin(details(mydata_send), &serialOutputLine);
-    //ET2.begin(details(mydata_remote), &serialOutputLine);
   #endif
 
   #ifdef ANALOG_POTENTIOMENTERS_READ
@@ -300,7 +265,6 @@ Serial.println("setup: Write initial servo positions (350 to start with)  2.for 
    Serial.println("setup:done. setup END.");
    Serial.println("starting loop.... ");
 }
-
 
 //-------------------------loop------------------------------------------------
 //-------------------------loop------------------------------------------------
@@ -407,29 +371,13 @@ void loop() {
       }//if(oldEncoderPosition != newEncoderPosition)
     }
     //--------------------------------------------------------------------------
-
-    //servoPulse[(activeServoSet*4)+0] = map(analogRead(pot0), 0, 1023, 0, 255);
-    //servoPulse[(activeServoSet*4)+1] = map(analogRead(pot2), 0, 1023, 0, 255);
-    //servoPulse[(activeServoSet*4)+2] = map(analogRead(pot1), 0, 1023, 0, 255);
-    //servoPulse[(activeServoSet*4)+3] = map(analogRead(pot3), 0, 1023, 0, 255);
-
   #endif
 
   //Clear the previous number, and write the new pulsewidths for the active servo set to the monitor
   loop_writePulsesToDisplay(currentMillis);
-  /*
-  previousServoPulse[(activeServoSet*4)+0] = servoPulse[(activeServoSet*4)+0];
-  previousServoPulse[(activeServoSet*4)+1] = servoPulse[(activeServoSet*4)+1];
-  previousServoPulse[(activeServoSet*4)+2] = servoPulse[(activeServoSet*4)+2];
-  previousServoPulse[(activeServoSet*4)+3] = servoPulse[(activeServoSet*4)+3];
-  */
   
   #ifdef USE_RF_REMOTE
     loop_WriteTo_RF_Line(currentMillis);
-  #endif
-
-  #ifdef USE_WIRED_SERIAL
-    loop_WriteToSerialLine(currentMillis);
   #endif
 
 #ifdef USE_PWM_DRIVER
@@ -451,17 +399,6 @@ void loop_WriteTo_RF_Line (unsigned long currentMillis) {
     ReadHwData();
     #ifdef USE_RF_REMOTE
       RF_Line_WriteEvent(currentMillis);
-    #endif
-  } // end of timed event send
-}
-//-----loop_WriteToSerialLine--------------------------------------
-void loop_WriteToSerialLine(unsigned long currentMillis) {
-  if (currentMillis - previousMillis_SerialLine >= interval_SerialLine) {  // start timed event for read and send
-    previousMillis_SerialLine = currentMillis;
-    //ToDoHere;
-    ReadHwData();
-    #ifdef USE_WIRED_SERIAL
-      SerialLine_WriteEvent(currentMillis);
     #endif
   } // end of timed event send
 }
@@ -492,17 +429,6 @@ void RF_Line_WriteEvent (unsigned long currentMillis) {
   #endif
 }
 
-
-void SerialLine_WriteEvent(unsigned long currentMillis) {
-  #ifdef USE_WIRED_SERIAL
-    //bool dataSent = false; 
-    
-    //if(bluetooth_On){
-      //dataSent = true;
-      serialLine.sendData();
-    //}
-  #endif
-}
 
 void loop_writePulsesToDisplay (unsigned long currentMillis){
   if (currentMillis - previousMillis_writeToDisplay >= interval_writeToDisplay) {  // start timed event for read and send
