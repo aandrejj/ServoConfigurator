@@ -10,6 +10,7 @@
 #define ANALOG_POTENTIOMENTERS_READ
 //#define DIGITAL_ENCODERS_READ 
 
+#include "Servo_Min_Max.h"
 
 #ifdef DIGITAL_ENCODERS_READ
   #include <Encoder.h>  //  Encoder Library,  https://github.com/PaulStoffregen/Encoder ,  http://www.pjrc.com/teensy/td_libs_Encoder.html
@@ -137,27 +138,67 @@ uint8_t activeServoSet = 0;
 #ifdef USE_PWM_DRIVER
   bool pwmAvailable = false;
 #endif
-uint16_t servoPulse[32] =    {127, 127, //175, 475, //127, 127, //eyeLeftUD
-                              127, 127, //275, 410, //127, 127, //eyeLeftLR
-                              127, 127, //350, 535, //127, 127, //eyeRightUD
-                              127, 127, //270, 495, //127, 127, //eyeRightLR
-                              127, 127, //323, 537, //127, 127, //eyelidLeftUpper
-                              127, 127, //313, 410, //127, 127, //eyelidLeftLower
-                              127, 127, //300, 475, //127, 127, //eyelidRightUpper
-                              127, 127, //341, 430, //127, 127, //eyelidRightLower
-                              127, 127, //315, 471, //127, 127, //eyebrowRight
-                              127, 127, //339, 475, //127, 127, //eyebrowLeft
-                              127, 127, //320, 480, //127, 127, //cheekRight
-                              127, 127, //280, 460, //127, 127, //cheekLeft
-                              127, 127, //355, 422, //127, 127, //upperLip
-                              127, 127, //375, 465, //127, 127, //forheadRight
-                              127, 127, //375, 440, //127, 127, //forheadLeft
-                              127, 127, //229, 420 //127, 127 //Jaw_UpDown
+
+#define SERVOPULSE_CONVERSION_NEEDED
+uint16_t servoPulse[32] =    {
+                              SERVO_MIN_eyeLeftUD       ,
+                              SERVO_MIN_eyeLeftLR       ,
+                              SERVO_MIN_eyeRightUD      ,
+                              SERVO_MIN_eyeRightLR      ,
+                              SERVO_MIN_eyelidLeftUpper ,
+                              SERVO_MIN_eyelidLeftLower ,
+                              SERVO_MIN_eyelidRightUpper,
+                              SERVO_MIN_eyelidRightLower,
+                              SERVO_MIN_eyebrowRight    ,
+                              SERVO_MIN_eyebrowLeft     ,
+                              SERVO_MIN_cheekRight      ,
+                              SERVO_MIN_cheekLeft       ,
+                              SERVO_MIN_upperLip        ,
+                              SERVO_MIN_forheadRight    ,
+                              SERVO_MIN_forheadLeft     ,
+                              SERVO_MIN_Jaw_UpDown      ,
+
+                              SERVO_MAX_eyeLeftUD       ,
+                              SERVO_MAX_eyeLeftLR       ,
+                              SERVO_MAX_eyeRightUD      ,
+                              SERVO_MAX_eyeRightLR      ,
+                              SERVO_MAX_eyelidLeftUpper ,
+                              SERVO_MAX_eyelidLeftLower ,
+                              SERVO_MAX_eyelidRightUpper,
+                              SERVO_MAX_eyelidRightLower,
+                              SERVO_MAX_eyebrowRight    ,
+                              SERVO_MAX_eyebrowLeft     ,
+                              SERVO_MAX_cheekRight      ,
+                              SERVO_MAX_cheekLeft       ,
+                              SERVO_MAX_upperLip        ,
+                              SERVO_MAX_forheadRight    ,
+                              SERVO_MAX_forheadLeft     ,
+                              SERVO_MAX_Jaw_UpDown      ,
                               };
+                              /*
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              };*/
+                             
 
 byte minMidMAXState;
 byte previousState;
 byte flag2state;
+byte previousFlag2state;
 
 //#define HIGHSPEED 
 
@@ -204,7 +245,11 @@ void setup() {
   //tft.pushColor(uint16_t color)
   //tft.pushColor(tft.Color565(RED,GREEN,BLUE));
   //tft.fillScreen(BLACK);
-  Serial.println("setup: done");
+  //Set background colour
+  Serial.println("setup: tft.fillScreen(BLACK)");
+  tft.fillScreen(BLACK);
+  Serial.println("setup: BLACK =done");
+
 
   #ifdef USE_PWM_DRIVER
     Serial.println("setup: pwd.begin()");
@@ -220,6 +265,10 @@ void setup() {
     }
   #endif
 
+  #ifdef SERVOPULSE_CONVERSION_NEEDED
+    servopulse_initial_conversion();
+  #endif
+
   #ifdef ANALOG_POTENTIOMENTERS_READ
     pinMode(pot0, INPUT);
     pinMode(pot1, INPUT);
@@ -232,10 +281,6 @@ void setup() {
 
   #endif
 
-//Set background colour
-  Serial.println("setup: tft.fillScreen(BLACK)");
-  tft.fillScreen(BLACK);
-  Serial.println("setup: BLACK =done");
   Serial.println("setup: Write servo numbers 1.for {for{}} start");
 //Write servo numbers 
   for (uint8_t count = 0; count <= ((16/LEFT_ARROW_STEP) - 1); count ++){ 
@@ -447,6 +492,19 @@ void loop_WriteTo_RF_Line (unsigned long currentMillis) {
   } // end of timed event send
 }
 
+
+void servopulse_initial_conversion() {
+  Serial.println("servopulse_initial_conversion. started");
+  for (byte i=0; i<31 ; i++) {
+    //map(long x, long in_min, long in_max, long out_min, long out_max)
+    Serial.print("i="+String(i)+", orig="+String(servoPulse[i])+", ");
+    servoPulse[i] = map(servoPulse[i], 0,1024, 0,255);
+    Serial.println(" new="+String(servoPulse[i]));
+  }
+  Serial.println("servopulse_initial_conversion. end");
+}
+
+
 void ReadHwData() {
   mydata_send.s00 = servoPulse[ 0];
   mydata_send.s01 = servoPulse[ 1];
@@ -551,7 +609,11 @@ void loop_servoSet_BTN_Select(unsigned long currentMillis){
         Serial.println(minMidMAXState);
       }
 
-      flag2state = (analogRead(flag2ButtonPin  )>127 ? HIGH : LOW);
+      flag2state = (analogRead(flag2ButtonPin  )>127 ? LOW : HIGH);
+      if(flag2state == HIGH && previousFlag2state == LOW) {
+          Serial.println("Button pressed");
+      }
+      previousFlag2state = flag2state;
 
     #endif
     #ifdef DIGITAL_ENCODERS_READ
