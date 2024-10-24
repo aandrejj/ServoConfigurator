@@ -10,6 +10,7 @@
 #define ANALOG_POTENTIOMENTERS_READ
 //#define DIGITAL_ENCODERS_READ 
 
+#include "Servo_Min_Max.h"
 
 #ifdef DIGITAL_ENCODERS_READ
   #include <Encoder.h>  //  Encoder Library,  https://github.com/PaulStoffregen/Encoder ,  http://www.pjrc.com/teensy/td_libs_Encoder.html
@@ -36,6 +37,8 @@
 #define DISP_RST   8
 #define DISP_SID   4
 #define DISP_SCLK  5
+#define LEFT_ARROW_SIZE  2
+#define LEFT_ARROW_STEP  2
 
   //           ST7735(uint8_t CS, uint8_t RS, uint8_t SID, uint8_t SCLK, uint8_t RST);
   ST7735 tft = ST7735(   DISP_CS,    DISP_RS,    DISP_SID,    DISP_SCLK,    DISP_RST); 
@@ -55,6 +58,8 @@
   #define pot3  A3
   #define upButtonPin  A4
   #define downButtonPin  A5
+  #define minMidMAX_SwitchPin A6 //flag0, flag1
+  #define flag2ButtonPin A7 //flag2
 
 #endif
 
@@ -75,7 +80,10 @@
   #define ROTARY_ENCODER4_PIN1 5
   #define ROTARY_ENCODER4_PIN2 4
   //#define ROTARY_ENCODER4_KEY  4
-  
+
+  #define minMidMAX_SwitchPin  A6
+  #define flag1ButtonPun A7
+
   // Change these two numbers to the pins connected to your encoder.
   //   Best Performance: both pins have interrupt capability
   //   Good Performance: only the first pin has interrupt capability
@@ -122,18 +130,75 @@ const uint16_t GREEN = 0x07e0;
 uint8_t spacing = 8;
 uint8_t yPos = 2;
 uint8_t servoNum = 0;
-char servo[]="Servo ";
-char colon[]=": ";
+char servo[]="Srv";//"Servo ";
+char colon[]=":";//": ";
 uint8_t upButtonState = 0;
 uint8_t downButtonState = 0;
 uint8_t activeServoSet = 0;
 #ifdef USE_PWM_DRIVER
   bool pwmAvailable = false;
 #endif
-uint16_t servoPulse[] =         {127, 127, 127, 127, 
-                                 127, 127, 127, 127, 
-                                 127, 127, 127, 127, 
-                                 127, 127, 127, 127};
+
+#define SERVOPULSE_CONVERSION_NEEDED
+uint16_t servoPulse[32] =    {
+                              SERVO_MIN_eyeLeftUD       ,
+                              SERVO_MIN_eyeLeftLR       ,
+                              SERVO_MIN_eyeRightUD      ,
+                              SERVO_MIN_eyeRightLR      ,
+                              SERVO_MIN_eyelidLeftUpper ,
+                              SERVO_MIN_eyelidLeftLower ,
+                              SERVO_MIN_eyelidRightUpper,
+                              SERVO_MIN_eyelidRightLower,
+                              SERVO_MIN_eyebrowRight    ,
+                              SERVO_MIN_eyebrowLeft     ,
+                              SERVO_MIN_cheekRight      ,
+                              SERVO_MIN_cheekLeft       ,
+                              SERVO_MIN_upperLip        ,
+                              SERVO_MIN_forheadRight    ,
+                              SERVO_MIN_forheadLeft     ,
+                              SERVO_MIN_Jaw_UpDown      ,
+
+                              SERVO_MAX_eyeLeftUD       ,
+                              SERVO_MAX_eyeLeftLR       ,
+                              SERVO_MAX_eyeRightUD      ,
+                              SERVO_MAX_eyeRightLR      ,
+                              SERVO_MAX_eyelidLeftUpper ,
+                              SERVO_MAX_eyelidLeftLower ,
+                              SERVO_MAX_eyelidRightUpper,
+                              SERVO_MAX_eyelidRightLower,
+                              SERVO_MAX_eyebrowRight    ,
+                              SERVO_MAX_eyebrowLeft     ,
+                              SERVO_MAX_cheekRight      ,
+                              SERVO_MAX_cheekLeft       ,
+                              SERVO_MAX_upperLip        ,
+                              SERVO_MAX_forheadRight    ,
+                              SERVO_MAX_forheadLeft     ,
+                              SERVO_MAX_Jaw_UpDown      ,
+                              };
+                              /*
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              127, 127,
+                              };*/
+                             
+
+byte minMidMAXState;
+byte previousState;
+byte flag2state;
+byte previousFlag2state;
 
 //#define HIGHSPEED 
 
@@ -163,7 +228,6 @@ const long interval_writeToDisplay = 350;
 TX_DATA_STRUCTURE mydata_send;
 RX_DATA_STRUCTURE mydata_remote;
 
-
 void setup() {
   
   //Serial.begin(9600);
@@ -179,9 +243,13 @@ void setup() {
   //tft.initR(INITR_BLACKTAB); 
 
   //tft.pushColor(uint16_t color)
-  //tft.pushColor(tft.Color565(r,g,b));
+  //tft.pushColor(tft.Color565(RED,GREEN,BLUE));
   //tft.fillScreen(BLACK);
-  Serial.println("setup: done");
+  //Set background colour
+  Serial.println("setup: tft.fillScreen(BLACK)");
+  tft.fillScreen(BLACK);
+  Serial.println("setup: BLACK =done");
+
 
   #ifdef USE_PWM_DRIVER
     Serial.println("setup: pwd.begin()");
@@ -197,6 +265,10 @@ void setup() {
     }
   #endif
 
+  #ifdef SERVOPULSE_CONVERSION_NEEDED
+    servopulse_initial_conversion();
+  #endif
+
   #ifdef ANALOG_POTENTIOMENTERS_READ
     pinMode(pot0, INPUT);
     pinMode(pot1, INPUT);
@@ -205,28 +277,26 @@ void setup() {
 
     pinMode(  upButtonPin, INPUT); //INPUT_PULLUP);
     pinMode(downButtonPin, INPUT); // INPUT_PULLUP);
+    //pinMode(flag2ButtonPin, INPUT);
+
   #endif
 
-//Set background colour
-  Serial.println("setup: tft.fillScreen(BLACK)");
-  tft.fillScreen(BLACK);
-  Serial.println("setup: BLACK =done");
   Serial.println("setup: Write servo numbers 1.for {for{}} start");
 //Write servo numbers 
-  for (uint8_t count = 0; count <= 3; count ++){ 
-    for (uint8_t i = 0; i <=3; i ++){
+  for (uint8_t count = 0; count <= ((16/LEFT_ARROW_STEP) - 1); count ++){ 
+    for (uint8_t i = 0; i <=(LEFT_ARROW_STEP - 1); i ++){
       char numRead[2];
-      char combined[32]= {0};
+      char combined[30]= {0};
       dtostrf(servoNum, 1, 0, numRead);
       strcat(combined, servo);
       strcat(combined, numRead);
       tft.drawString(0, yPos, combined, WHITE);
       //Serial.println("setup: y:"+String(yPos)+", combined:"+String(combined)+", colon:"+String(colon)+"count:"+String(count)+", i:"+String(i)+".");
-      tft.drawString(48, yPos, colon, WHITE);    
+      tft.drawString((((strlen(servo) + 1)) * 8), yPos, colon, WHITE);    
       servoNum ++;
       yPos += spacing;    
       }
-      yPos += 8;
+      yPos += (2*LEFT_ARROW_STEP); //8;
     }
 Serial.println("setup: 1.for {for{}} done");
 
@@ -234,20 +304,31 @@ Serial.println("setup: Write initial servo positions (350 to start with)  2.for 
 //Write initial servo positions (350 to start with)  
   servoNum = 0;
   yPos = 2;
-  for (uint8_t count = 0; count <= 3; count ++){ 
-    for (uint8_t i = 0; i <=3; i ++){
-      char numRead[3];
-      dtostrf(servoPulse[servoNum], 3, 0, numRead);
-      tft.drawString(60, yPos, numRead, YELLOW);
+  for (uint8_t count = 0; count <= ((16/LEFT_ARROW_STEP) - 1); count ++){ 
+    for (uint8_t i = 0; i <=(LEFT_ARROW_STEP - 1); i ++){
+      if(LEFT_ARROW_STEP>2) {
+        char numRead[3];
+        dtostrf(servoPulse[servoNum], 3, 0, numRead);
+        tft.drawString((((strlen(servo) + 2)) * 8), yPos, numRead, YELLOW);
+      } else {
+        char numRead[3];
+        dtostrf(servoPulse[servoNum], 3, 0, numRead);
+        tft.drawString((((strlen(servo) + 2)) * 8), yPos, numRead, YELLOW);
+
+        char numRead2[3];
+        dtostrf(servoPulse[servoNum + 16], 3, 0, numRead2);
+        tft.drawString((((strlen(servo) + 2 + 4)) * 8), yPos, numRead2, YELLOW);
+
+      }
       //Serial.println("setup: y:"+String(yPos)+", numRead:"+String(numRead)+", count:"+String(count)+", i:"+String(i)+".");
       servoNum ++;
       yPos += spacing;    
       }
-    yPos += 8;
+    yPos += (2*LEFT_ARROW_STEP); //8;
   }
   Serial.println("setup: 2.for {for{}} done");
 
-   tft.drawString(95, 3, "<", WHITE, 4);
+   tft.drawString((128-(LEFT_ARROW_SIZE*8)), 3, "<", WHITE, LEFT_ARROW_SIZE);
   
   //------------------
   #ifdef USE_RF_REMOTE
@@ -277,10 +358,18 @@ void loop() {
   loop_servoSet_BTN_Select(currentMillis);
   #ifdef ANALOG_POTENTIOMENTERS_READ
     //Record the positions of all servos mapped to a pulsewidth of between 0 and 255
-    servoPulse[(activeServoSet*4)+0] = map(analogRead(pot0), 0, 1023, 255, 0);
-    servoPulse[(activeServoSet*4)+1] = map(analogRead(pot2), 0, 1023, 255, 0);
-    servoPulse[(activeServoSet*4)+2] = map(analogRead(pot1), 0, 1023, 255, 0);
-    servoPulse[(activeServoSet*4)+3] = map(analogRead(pot3), 0, 1023, 255, 0);
+    if(LEFT_ARROW_STEP>2) {
+      servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0] = map(analogRead(pot0), 0, 1023, 255, 0);
+      servoPulse[(activeServoSet*LEFT_ARROW_STEP)+1] = map(analogRead(pot2), 0, 1023, 255, 0);
+      servoPulse[(activeServoSet*LEFT_ARROW_STEP)+2] = map(analogRead(pot1), 0, 1023, 255, 0);
+      servoPulse[(activeServoSet*LEFT_ARROW_STEP)+3] = map(analogRead(pot3), 0, 1023, 255, 0);
+    } else {
+      servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0] = map(analogRead(pot0), 0, 1023, 255, 0);
+      servoPulse[(activeServoSet*LEFT_ARROW_STEP)+1] = map(analogRead(pot1), 0, 1023, 255, 0);
+
+      servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0+16] = map(analogRead(pot2), 0, 1023, 255, 0);
+      servoPulse[(activeServoSet*LEFT_ARROW_STEP)+1+16] = map(analogRead(pot3), 0, 1023, 255, 0);
+    }
   #endif
 
   #ifdef DIGITAL_ENCODERS_READ
@@ -295,13 +384,13 @@ void loop() {
       if(oldEncoderPosition1 != newEncoderPosition1) {
         Serial.println("newEncoderPosition1 "+String(newEncoderPosition1));
         if(newEncoderPosition1 < oldEncoderPosition1) {
-          if(servoPulse[(activeServoSet*4)+0]<255){
-            servoPulse[(activeServoSet*4)+0] =servoPulse[(activeServoSet*4)+0] +1;
+          if(servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0]<255){
+            servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0] =servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0] +1;
           }
         }
         if(newEncoderPosition1 > oldEncoderPosition1) {
-          if(servoPulse[(activeServoSet*4)+0]>0){
-            servoPulse[(activeServoSet*4)+0] =servoPulse[(activeServoSet*4)+0] -1;
+          if(servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0]>0){
+            servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0] =servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0] -1;
           }
         }
         oldEncoderPosition1 = newEncoderPosition1;
@@ -316,13 +405,13 @@ void loop() {
       if(oldEncoderPosition2 != newEncoderPosition2) {
         Serial.println("newEncoderPosition2 "+String(newEncoderPosition2));
         if(newEncoderPosition2 < oldEncoderPosition2) {
-          if(servoPulse[(activeServoSet*4)+1]<255){
-            servoPulse[(activeServoSet*4)+1] =servoPulse[(activeServoSet*4)+1] +1;
+          if(servoPulse[(activeServoSet*LEFT_ARROW_STEP)+1]<255){
+            servoPulse[(activeServoSet*LEFT_ARROW_STEP)+1] =servoPulse[(activeServoSet*LEFT_ARROW_STEP)+1] +1;
           }
         }
         if(newEncoderPosition2 > oldEncoderPosition2) {
-          if(servoPulse[(activeServoSet*4)+1]>0){
-            servoPulse[(activeServoSet*4)+1] =servoPulse[(activeServoSet*4)+1] -1;
+          if(servoPulse[(activeServoSet*LEFT_ARROW_STEP)+1]>0){
+            servoPulse[(activeServoSet*LEFT_ARROW_STEP)+1] =servoPulse[(activeServoSet*LEFT_ARROW_STEP)+1] -1;
           }
         }
         oldEncoderPosition2 = newEncoderPosition2;
@@ -337,13 +426,13 @@ void loop() {
       if(oldEncoderPosition3 != newEncoderPosition3) {
         Serial.println("newEncoderPosition3 "+String(newEncoderPosition3));
         if(newEncoderPosition3 < oldEncoderPosition3) {
-          if(servoPulse[(activeServoSet*4)+2]<255){
-            servoPulse[(activeServoSet*4)+2] =servoPulse[(activeServoSet*4)+2] +1;
+          if(servoPulse[(activeServoSet*LEFT_ARROW_STEP)+2]<255){
+            servoPulse[(activeServoSet*LEFT_ARROW_STEP)+2] =servoPulse[(activeServoSet*LEFT_ARROW_STEP)+2] +1;
           }
         }
         if(newEncoderPosition3 > oldEncoderPosition3) {
-          if(servoPulse[(activeServoSet*4)+2]>0){
-            servoPulse[(activeServoSet*4)+2] =servoPulse[(activeServoSet*4)+2] -1;
+          if(servoPulse[(activeServoSet*LEFT_ARROW_STEP)+2]>0){
+            servoPulse[(activeServoSet*LEFT_ARROW_STEP)+2] =servoPulse[(activeServoSet*LEFT_ARROW_STEP)+2] -1;
           }
         }
         oldEncoderPosition3 = newEncoderPosition3;
@@ -358,13 +447,13 @@ void loop() {
       if(oldEncoderPosition4 != newEncoderPosition4) {
         Serial.println("newEncoderPosition4 "+String(newEncoderPosition4));
         if(newEncoderPosition4 < oldEncoderPosition4) {
-          if(servoPulse[(activeServoSet*4)+3]<255){
-            servoPulse[(activeServoSet*4)+3] =servoPulse[(activeServoSet*4)+3] +1;
+          if(servoPulse[(activeServoSet*LEFT_ARROW_STEP)+3]<255){
+            servoPulse[(activeServoSet*LEFT_ARROW_STEP)+3] =servoPulse[(activeServoSet*LEFT_ARROW_STEP)+3] +1;
           }
         }
         if(newEncoderPosition4 > oldEncoderPosition4) {
-          if(servoPulse[(activeServoSet*4)+3]>0){
-            servoPulse[(activeServoSet*4)+3] =servoPulse[(activeServoSet*4)+3] -1;
+          if(servoPulse[(activeServoSet*LEFT_ARROW_STEP)+3]>0){
+            servoPulse[(activeServoSet*LEFT_ARROW_STEP)+3] =servoPulse[(activeServoSet*LEFT_ARROW_STEP)+3] -1;
           }
         }
         oldEncoderPosition4 = newEncoderPosition4;
@@ -383,10 +472,10 @@ void loop() {
 #ifdef USE_PWM_DRIVER
   if(pwmAvailable) {
     //Using the servo driver board, set the active servos to the position  specified by the potentiometers
-    pwm.setPWM((activeServoSet*4)+0, 0, servoPulse[(activeServoSet*4)+0]);
-    pwm.setPWM((activeServoSet*4)+1, 0, servoPulse[(activeServoSet*4)+1]);
-    pwm.setPWM((activeServoSet*4)+2, 0, servoPulse[(activeServoSet*4)+2]);
-    pwm.setPWM((activeServoSet*4)+3, 0, servoPulse[(activeServoSet*4)+3]);
+    pwm.setPWM((activeServoSet*LEFT_ARROW_STEP)+0, 0, servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0]);
+    pwm.setPWM((activeServoSet*LEFT_ARROW_STEP)+1, 0, servoPulse[(activeServoSet*LEFT_ARROW_STEP)+1]);
+    pwm.setPWM((activeServoSet*LEFT_ARROW_STEP)+2, 0, servoPulse[(activeServoSet*LEFT_ARROW_STEP)+2]);
+    pwm.setPWM((activeServoSet*LEFT_ARROW_STEP)+3, 0, servoPulse[(activeServoSet*LEFT_ARROW_STEP)+3]);
   }
 #endif  
   //delay(150);
@@ -402,6 +491,19 @@ void loop_WriteTo_RF_Line (unsigned long currentMillis) {
     #endif
   } // end of timed event send
 }
+
+
+void servopulse_initial_conversion() {
+  Serial.println("servopulse_initial_conversion. started");
+  for (byte i=0; i<31 ; i++) {
+    //map(long x, long in_min, long in_max, long out_min, long out_max)
+    Serial.print("i="+String(i)+", orig="+String(servoPulse[i])+", ");
+    servoPulse[i] = map(servoPulse[i], 0,1024, 0,255);
+    Serial.println(" new="+String(servoPulse[i]));
+  }
+  Serial.println("servopulse_initial_conversion. end");
+}
+
 
 void ReadHwData() {
   mydata_send.s00 = servoPulse[ 0];
@@ -420,7 +522,26 @@ void ReadHwData() {
   mydata_send.s13 = servoPulse[13];
   mydata_send.s14 = servoPulse[14];
   mydata_send.s15 = servoPulse[15];
-  mydata_send.mode =  1; // mode:  0 = fourSticksController (8 chanels) ,   1 = ServoConfigurator (16 chanels) , 3 = ?
+
+  mydata_send.x00 = servoPulse[16 +  0];
+  mydata_send.x01 = servoPulse[16 +  1];
+  mydata_send.x02 = servoPulse[16 +  2];
+  mydata_send.x03 = servoPulse[16 +  3];
+  mydata_send.x04 = servoPulse[16 +  4];
+  mydata_send.x05 = servoPulse[16 +  5];
+  mydata_send.x06 = servoPulse[16 +  6];
+  mydata_send.x07 = servoPulse[16 +  7];
+  mydata_send.x08 = servoPulse[16 +  8];
+  mydata_send.x09 = servoPulse[16 +  9];
+  mydata_send.x10 = servoPulse[16 + 10];
+  mydata_send.x11 = servoPulse[16 + 11];
+  mydata_send.x12 = servoPulse[16 + 12];
+  mydata_send.x13 = servoPulse[16 + 13];
+  mydata_send.x14 = servoPulse[16 + 14];
+  mydata_send.x15 = servoPulse[16 + 15];
+
+  mydata_send.mode =  1; // mode:  0 = fourSticksController (8 chanels) ,   1 = ServoConfigurator (16 chanels) , 2 = MinMaxServoConfig (min max for 2 chanels)
+  mydata_send.flags = 0;
 }
 //------------------BtWriteEvent-------------------------------------
 void RF_Line_WriteEvent (unsigned long currentMillis) {
@@ -435,21 +556,35 @@ void loop_writePulsesToDisplay (unsigned long currentMillis){
     previousMillis_writeToDisplay = currentMillis;
 
     servoNum = 0;
-    yPos = 2 + (activeServoSet*40);
+    yPos = 2 + (activeServoSet*((8+2) * LEFT_ARROW_STEP));
   
     //Serial.println("loop_writePulsesToDisplay: for{...} start");
-    //if(previousServoPulse[(activeServoSet*4)+servoNum] != servoPulse[(activeServoSet*4)+servoNum]) {
-      for (uint8_t i = 0; i <=3; i ++){
-        char inChar[3];
-        dtostrf(servoPulse[(activeServoSet*4)+servoNum], 3, 0, inChar);
-        tft.fillRect(58, yPos, 30, 8, BLACK);
-        tft.drawString(60, yPos, inChar, YELLOW);
+    //if(previousServoPulse[(activeServoSet*LEFT_ARROW_STEP)+servoNum] != servoPulse[(activeServoSet*LEFT_ARROW_STEP)+servoNum]) {
+      for (uint8_t i = 0; i <=(LEFT_ARROW_STEP - 1); i ++){
+        if(LEFT_ARROW_STEP>2) {
+          char inChar[3];
+          dtostrf(servoPulse[(activeServoSet*LEFT_ARROW_STEP)+i], 3, 0, inChar);
+          tft.fillRect(((((strlen(servo) + 2)) * 8)-2), yPos, 30, 8, BLACK);
+          tft.drawString((((strlen(servo) + 2)) * 8), yPos, inChar, YELLOW);
+        } else {
+          char inChar[3];
+          dtostrf(servoPulse[(activeServoSet*LEFT_ARROW_STEP)+i], 3, 0, inChar);
+          //dtostrf(((10*(activeServoSet*LEFT_ARROW_STEP))+(2*i)), 3, 0, inChar);
+          tft.fillRect(((((strlen(servo) + 2)) * 8)-2), yPos, 30, 8, BLACK);
+          tft.drawString((((strlen(servo) + 2)) * 8), yPos, inChar, YELLOW);
+
+          char inChar2[3];
+          dtostrf(servoPulse[(activeServoSet*LEFT_ARROW_STEP)+i+16], 3, 0, inChar2);
+          //dtostrf(((10*(activeServoSet*LEFT_ARROW_STEP))+(2*i)+1), 3, 0, inChar2);
+          tft.fillRect(((((strlen(servo) + 2 + 4)) * 8)-2), yPos, 30, 8, BLACK);
+          tft.drawString((((strlen(servo) + 2 + 4)) * 8), yPos, inChar2, YELLOW);
+        }
         //Serial.print(" loop_writePulsesToDisplay: yPos:"+String(yPos)+" , inChar:"+String(inChar)+". ");
         servoNum ++;
         yPos += spacing;    
       }
     //}
-    yPos += 8;
+    yPos += (2*LEFT_ARROW_STEP); //8;
     //Serial.println("loop_writePulsesToDisplay: end");
   }
 }
@@ -460,29 +595,50 @@ void loop_servoSet_BTN_Select(unsigned long currentMillis){
     #ifdef ANALOG_POTENTIOMENTERS_READ
       upButtonState = digitalRead(upButtonPin);
       downButtonState = digitalRead(downButtonPin);
+
+      int analogValue = analogRead(minMidMAX_SwitchPin);
+
+      if(analogValue < 100) minMidMAXState = 0;
+      else if(analogValue > 900) minMidMAXState = 2;
+      else minMidMAXState = 1;
+    
+      if(previousState != minMidMAXState) {
+    
+        previousState = minMidMAXState;
+        Serial.print("Button state: ");
+        Serial.println(minMidMAXState);
+      }
+
+      flag2state = (analogRead(flag2ButtonPin  )>127 ? LOW : HIGH);
+      if(flag2state == HIGH && previousFlag2state == LOW) {
+          Serial.println("Button pressed");
+      }
+      previousFlag2state = flag2state;
+
     #endif
     #ifdef DIGITAL_ENCODERS_READ
       //upButtonState = digitalRead(upButtonPin);
       //downButtonState = digitalRead(downButtonPin);
         upButtonState = (analogRead(ANALOG_BUTTON_UP  )>127 ? HIGH : LOW);
       downButtonState = (analogRead(ANALOG_BUTTON_DOWN)>127 ? HIGH : LOW);
+
     #endif
     if (upButtonState == LOW){
        activeServoSet ++;
-       if (activeServoSet >3){
+       if (activeServoSet >((16/LEFT_ARROW_STEP) - 1)){
         activeServoSet = 0;
        }
-        tft.fillRect(95, 0, 30, 160, BLACK);
-        tft.drawString(95, ((activeServoSet*40)+3), "<", WHITE, 4);
+        tft.fillRect((128-(LEFT_ARROW_SIZE*8)), 0, (LEFT_ARROW_SIZE*8), 160, BLACK);
+        tft.drawString((128-(LEFT_ARROW_SIZE*8)), ((activeServoSet * ((2+8) * LEFT_ARROW_STEP))+3), "<", WHITE, LEFT_ARROW_SIZE);
         delay(150);
     }
     if (downButtonState == LOW){
       activeServoSet --;
-      if (activeServoSet >3){
-        activeServoSet = 3;
+      if (activeServoSet >((16/LEFT_ARROW_STEP) - 1)){
+        activeServoSet = ((16/LEFT_ARROW_STEP) - 1);
       }
-        tft.fillRect(95, 0, 30, 160, BLACK);
-        tft.drawString(95, ((activeServoSet*40)+3), "<", WHITE, 4);
+        tft.fillRect((128-(LEFT_ARROW_SIZE*8)), 0, (LEFT_ARROW_SIZE*8), 160, BLACK);
+        tft.drawString((128-(LEFT_ARROW_SIZE*8)), ((activeServoSet * ((8+2) * LEFT_ARROW_STEP))+3), "<", WHITE, LEFT_ARROW_SIZE);
         delay(150);
     }
     //ToDoHere;
