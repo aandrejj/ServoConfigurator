@@ -59,7 +59,7 @@
   #define upButtonPin  A4
   #define downButtonPin  A5
   #define minMidMAX_SwitchPin A6 //flag0, flag1
-  #define flag2ButtonPin A7 //flag2
+  #define fireButtonPin A7 //flag2
 
 #endif
 
@@ -80,9 +80,6 @@
   #define ROTARY_ENCODER4_PIN1 5
   #define ROTARY_ENCODER4_PIN2 4
   //#define ROTARY_ENCODER4_KEY  4
-
-  #define minMidMAX_SwitchPin  A6
-  #define flag1ButtonPun A7
 
   // Change these two numbers to the pins connected to your encoder.
   //   Best Performance: both pins have interrupt capability
@@ -135,6 +132,14 @@ char colon[]=":";//": ";
 uint8_t upButtonState = 0;
 uint8_t downButtonState = 0;
 uint8_t activeServoSet = 0;
+uint8_t fireBtnState = 0;
+uint8_t minMidMAXState = 0;
+uint8_t previousState = 0;
+uint8_t previousFireBtnState = 0;
+
+int prevAnalogValue = 0;
+int analogValue=0;
+
 #ifdef USE_PWM_DRIVER
   bool pwmAvailable = false;
 #endif
@@ -175,30 +180,7 @@ uint16_t servoPulse[32] =    {
                               SERVO_MAX_forheadLeft     ,
                               SERVO_MAX_Jaw_UpDown      ,
                               };
-                              /*
-                              127, 127,
-                              127, 127,
-                              127, 127,
-                              127, 127,
-                              127, 127,
-                              127, 127,
-                              127, 127,
-                              127, 127,
-                              127, 127,
-                              127, 127,
-                              127, 127,
-                              127, 127,
-                              127, 127,
-                              127, 127,
-                              127, 127,
-                              127, 127,
-                              };*/
-                             
 
-byte minMidMAXState;
-byte previousState;
-byte flag2state;
-byte previousFlag2state;
 
 //#define HIGHSPEED 
 
@@ -277,59 +259,13 @@ void setup() {
 
     pinMode(  upButtonPin, INPUT); //INPUT_PULLUP);
     pinMode(downButtonPin, INPUT); // INPUT_PULLUP);
-    //pinMode(flag2ButtonPin, INPUT);
+    
+    //pinMode(minMidMAX_SwitchPin, INPUT);
+    pinMode(fireButtonPin, INPUT);
 
   #endif
 
-  Serial.println("setup: Write servo numbers 1.for {for{}} start");
-//Write servo numbers 
-  for (uint8_t count = 0; count <= ((16/LEFT_ARROW_STEP) - 1); count ++){ 
-    for (uint8_t i = 0; i <=(LEFT_ARROW_STEP - 1); i ++){
-      char numRead[2];
-      char combined[30]= {0};
-      dtostrf(servoNum, 1, 0, numRead);
-      strcat(combined, servo);
-      strcat(combined, numRead);
-      tft.drawString(0, yPos, combined, WHITE);
-      //Serial.println("setup: y:"+String(yPos)+", combined:"+String(combined)+", colon:"+String(colon)+"count:"+String(count)+", i:"+String(i)+".");
-      tft.drawString((((strlen(servo) + 1)) * 8), yPos, colon, WHITE);    
-      servoNum ++;
-      yPos += spacing;    
-      }
-      yPos += (2*LEFT_ARROW_STEP); //8;
-    }
-Serial.println("setup: 1.for {for{}} done");
-
-Serial.println("setup: Write initial servo positions (350 to start with)  2.for {for{}} started");
-//Write initial servo positions (350 to start with)  
-  servoNum = 0;
-  yPos = 2;
-  for (uint8_t count = 0; count <= ((16/LEFT_ARROW_STEP) - 1); count ++){ 
-    for (uint8_t i = 0; i <=(LEFT_ARROW_STEP - 1); i ++){
-      if(LEFT_ARROW_STEP>2) {
-        char numRead[3];
-        dtostrf(servoPulse[servoNum], 3, 0, numRead);
-        tft.drawString((((strlen(servo) + 2)) * 8), yPos, numRead, YELLOW);
-      } else {
-        char numRead[3];
-        dtostrf(servoPulse[servoNum], 3, 0, numRead);
-        tft.drawString((((strlen(servo) + 2)) * 8), yPos, numRead, YELLOW);
-
-        char numRead2[3];
-        dtostrf(servoPulse[servoNum + 16], 3, 0, numRead2);
-        tft.drawString((((strlen(servo) + 2 + 4)) * 8), yPos, numRead2, YELLOW);
-
-      }
-      //Serial.println("setup: y:"+String(yPos)+", numRead:"+String(numRead)+", count:"+String(count)+", i:"+String(i)+".");
-      servoNum ++;
-      yPos += spacing;    
-      }
-    yPos += (2*LEFT_ARROW_STEP); //8;
-  }
-  Serial.println("setup: 2.for {for{}} done");
-
-   tft.drawString((128-(LEFT_ARROW_SIZE*8)), 3, "<", WHITE, LEFT_ARROW_SIZE);
-  
+  prepareServoForm();
   //------------------
   #ifdef USE_RF_REMOTE
     Serial.println("setup: radio.begin()....");
@@ -364,11 +300,11 @@ void loop() {
       servoPulse[(activeServoSet*LEFT_ARROW_STEP)+2] = map(analogRead(pot1), 0, 1023, 255, 0);
       servoPulse[(activeServoSet*LEFT_ARROW_STEP)+3] = map(analogRead(pot3), 0, 1023, 255, 0);
     } else {
-      servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0] = map(analogRead(pot0), 0, 1023, 255, 0);
-      servoPulse[(activeServoSet*LEFT_ARROW_STEP)+1] = map(analogRead(pot1), 0, 1023, 255, 0);
+      servoPulse[0] = map(analogRead(pot0), 0, 1023, 255, 0);
+      servoPulse[1] = map(analogRead(pot1), 0, 1023, 255, 0);
 
-      servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0+16] = map(analogRead(pot2), 0, 1023, 255, 0);
-      servoPulse[(activeServoSet*LEFT_ARROW_STEP)+1+16] = map(analogRead(pot3), 0, 1023, 255, 0);
+      servoPulse[2] = map(analogRead(pot2), 0, 1023, 255, 0);
+      servoPulse[3] = map(analogRead(pot3), 0, 1023, 255, 0);
     }
   #endif
 
@@ -492,10 +428,60 @@ void loop_WriteTo_RF_Line (unsigned long currentMillis) {
   } // end of timed event send
 }
 
+void prepareServoForm(){
+  Serial.println("setup: Write servo numbers 1.for {for{}} start");
+  //Write servo numbers 
+  for (uint8_t count = 0; count <= ((16/LEFT_ARROW_STEP) - 1); count ++){ 
+    for (uint8_t i = 0; i <=(LEFT_ARROW_STEP - 1); i ++){
+      char numRead[2];
+      char combined[30]= {0};
+      dtostrf(servoNum, 1, 0, numRead);
+      strcat(combined, servo);
+      strcat(combined, numRead);
+      tft.drawString(0, yPos, combined, WHITE);
+      //Serial.println("setup: y:"+String(yPos)+", combined:"+String(combined)+", colon:"+String(colon)+"count:"+String(count)+", i:"+String(i)+".");
+      tft.drawString((((strlen(servo) + 1)) * 8), yPos, colon, WHITE);    
+      servoNum ++;
+      yPos += spacing;    
+      }
+      yPos += (2*LEFT_ARROW_STEP); //8;
+    }
+  Serial.println("setup: 1.for {for{}} done");
+
+  Serial.println("setup: Write initial servo positions (350 to start with)  2.for {for{}} started");
+  //Write initial servo positions (350 to start with)  
+  servoNum = 0;
+  yPos = 2;
+  for (uint8_t count = 0; count <= ((16/LEFT_ARROW_STEP) - 1); count ++){ 
+    for (uint8_t i = 0; i <=(LEFT_ARROW_STEP - 1); i ++){
+      if(LEFT_ARROW_STEP>2) {
+        char numRead[3];
+        dtostrf(servoPulse[servoNum], 3, 0, numRead);
+        tft.drawString((((strlen(servo) + 2)) * 8), yPos, numRead, YELLOW);
+      } else {
+        char numRead[3];
+        dtostrf(servoPulse[servoNum], 3, 0, numRead);
+        tft.drawString((((strlen(servo) + 2)) * 8), yPos, numRead, YELLOW);
+
+        char numRead2[3];
+        dtostrf(servoPulse[servoNum + 2], 3, 0, numRead2);
+        tft.drawString((((strlen(servo) + 2 + 4)) * 8), yPos, numRead2, YELLOW);
+
+      }
+      //Serial.println("setup: y:"+String(yPos)+", numRead:"+String(numRead)+", count:"+String(count)+", i:"+String(i)+".");
+      servoNum ++;
+      yPos += spacing;    
+      }
+    yPos += (2*LEFT_ARROW_STEP); //8;
+  }
+  Serial.println("setup: 2.for {for{}} done");
+
+   tft.drawString((128-(LEFT_ARROW_SIZE*8)), 3, "<", WHITE, LEFT_ARROW_SIZE);
+}
 
 void servopulse_initial_conversion() {
   Serial.println("servopulse_initial_conversion. started");
-  for (byte i=0; i<31 ; i++) {
+  for (byte i=0; i<3 ; i++) {
     //map(long x, long in_min, long in_max, long out_min, long out_max)
     Serial.print("i="+String(i)+", orig="+String(servoPulse[i])+", ");
     servoPulse[i] = map(servoPulse[i], 0,1024, 0,255);
@@ -506,42 +492,23 @@ void servopulse_initial_conversion() {
 
 
 void ReadHwData() {
-  mydata_send.s00 = servoPulse[ 0];
-  mydata_send.s01 = servoPulse[ 1];
-  mydata_send.s02 = servoPulse[ 2];
-  mydata_send.s03 = servoPulse[ 3];
-  mydata_send.s04 = servoPulse[ 4];
-  mydata_send.s05 = servoPulse[ 5];
-  mydata_send.s06 = servoPulse[ 6];
-  mydata_send.s07 = servoPulse[ 7];
-  mydata_send.s08 = servoPulse[ 8];
-  mydata_send.s09 = servoPulse[ 9];
-  mydata_send.s10 = servoPulse[10];
-  mydata_send.s11 = servoPulse[11];
-  mydata_send.s12 = servoPulse[12];
-  mydata_send.s13 = servoPulse[13];
-  mydata_send.s14 = servoPulse[14];
-  mydata_send.s15 = servoPulse[15];
+  mydata_send.servoSet = activeServoSet;
 
-  mydata_send.x00 = servoPulse[16 +  0];
-  mydata_send.x01 = servoPulse[16 +  1];
-  mydata_send.x02 = servoPulse[16 +  2];
-  mydata_send.x03 = servoPulse[16 +  3];
-  mydata_send.x04 = servoPulse[16 +  4];
-  mydata_send.x05 = servoPulse[16 +  5];
-  mydata_send.x06 = servoPulse[16 +  6];
-  mydata_send.x07 = servoPulse[16 +  7];
-  mydata_send.x08 = servoPulse[16 +  8];
-  mydata_send.x09 = servoPulse[16 +  9];
-  mydata_send.x10 = servoPulse[16 + 10];
-  mydata_send.x11 = servoPulse[16 + 11];
-  mydata_send.x12 = servoPulse[16 + 12];
-  mydata_send.x13 = servoPulse[16 + 13];
-  mydata_send.x14 = servoPulse[16 + 14];
-  mydata_send.x15 = servoPulse[16 + 15];
+  mydata_send.s1min = servoPulse[ 0];
+  //mydata_send.s1mid = servoPulse[ 1];
+  //mydata_send.s1curr= servoPulse[ 2];
+  mydata_send.s1max = servoPulse[ 1];
 
-  mydata_send.mode =  1; // mode:  0 = fourSticksController (8 chanels) ,   1 = ServoConfigurator (16 chanels) , 2 = MinMaxServoConfig (min max for 2 chanels)
-  mydata_send.flags = 0;
+  mydata_send.s2min = servoPulse[ 2];
+  //mydata_send.s05 = servoPulse[ 5];
+  //mydata_send.s06 = servoPulse[ 6];
+  mydata_send.s2max = servoPulse[ 3];
+
+  mydata_send.devType =  2; // mode:  0 = fourSticksController (8 chanels) ,   1 = ServoConfigurator (16 chanels) , 2 = MinMaxServoConfig (min max for 2 chanels)
+  //mydata_send.flags = 0;
+
+  mydata_send.switchPos = minMidMAXState;
+  mydata_send.fireBtn1 = fireBtnState;
 }
 //------------------BtWriteEvent-------------------------------------
 void RF_Line_WriteEvent (unsigned long currentMillis) {
@@ -574,7 +541,7 @@ void loop_writePulsesToDisplay (unsigned long currentMillis){
           tft.drawString((((strlen(servo) + 2)) * 8), yPos, inChar, YELLOW);
 
           char inChar2[3];
-          dtostrf(servoPulse[(activeServoSet*LEFT_ARROW_STEP)+i+16], 3, 0, inChar2);
+          dtostrf(servoPulse[(activeServoSet*LEFT_ARROW_STEP)+i+2], 3, 0, inChar2);
           //dtostrf(((10*(activeServoSet*LEFT_ARROW_STEP))+(2*i)+1), 3, 0, inChar2);
           tft.fillRect(((((strlen(servo) + 2 + 4)) * 8)-2), yPos, 30, 8, BLACK);
           tft.drawString((((strlen(servo) + 2 + 4)) * 8), yPos, inChar2, YELLOW);
@@ -596,7 +563,11 @@ void loop_servoSet_BTN_Select(unsigned long currentMillis){
       upButtonState = digitalRead(upButtonPin);
       downButtonState = digitalRead(downButtonPin);
 
-      int analogValue = analogRead(minMidMAX_SwitchPin);
+      analogValue = analogRead(minMidMAX_SwitchPin);
+      //if(prevAnalogValue != analogValue){
+      //  Serial.println("loop_servoSet_BTN_Select: analogValue="+String(analogValue));
+      //  prevAnalogValue = analogValue;
+      //}
 
       if(analogValue < 100) minMidMAXState = 0;
       else if(analogValue > 900) minMidMAXState = 2;
@@ -609,11 +580,11 @@ void loop_servoSet_BTN_Select(unsigned long currentMillis){
         Serial.println(minMidMAXState);
       }
 
-      flag2state = (analogRead(flag2ButtonPin  )>127 ? LOW : HIGH);
-      if(flag2state == HIGH && previousFlag2state == LOW) {
-          Serial.println("Button pressed");
+      fireBtnState = (analogRead(fireButtonPin )>127 ? LOW : HIGH);
+      if(fireBtnState == HIGH && previousFireBtnState == LOW) {
+          Serial.println("Button - fire pressed");
       }
-      previousFlag2state = flag2state;
+      previousFireBtnState = fireBtnState;
 
     #endif
     #ifdef DIGITAL_ENCODERS_READ
