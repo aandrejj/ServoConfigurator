@@ -5,8 +5,8 @@
 *   Install Adafruit PWM servo driver library from the library manager (From inside arduino IDE > Tools > Manage Libraries > Search for "Adafruit PWM")
 */
 
-//#define USE_PWM_DRIVER
-#define USE_RF_REMOTE
+#define USE_PWM_DRIVER
+//#define USE_RF_REMOTE
 #define ANALOG_POTENTIOMENTERS_READ
 //#define DIGITAL_ENCODERS_READ 
 
@@ -38,8 +38,9 @@
 #define DISP_SCLK  5
 
   //           ST7735(uint8_t CS, uint8_t RS, uint8_t SID, uint8_t SCLK, uint8_t RST);
-  ST7735 tft = ST7735(   DISP_CS,    DISP_RS,    DISP_SID,    DISP_SCLK,    DISP_RST); 
-//ST7735 tft = ST7735(         6,          7,          11,           13,           8); 
+  //ST7735 tft = ST7735(   DISP_CS,    DISP_RS,    DISP_SID,    DISP_SCLK,    DISP_RST); 
+//ST7735 tft = ST7735(         6,          7,          11,           13,           8);
+ST7735 tft = ST7735(         6,          7,          13,           11,           8); 
   //           ST7735(uint8_t CS, uint8_t RS, uint8_t RST);
 //ST7735 tft = ST7735(6, 7, 8);    
 
@@ -277,10 +278,10 @@ void loop() {
   loop_servoSet_BTN_Select(currentMillis);
   #ifdef ANALOG_POTENTIOMENTERS_READ
     //Record the positions of all servos mapped to a pulsewidth of between 0 and 255
-    servoPulse[(activeServoSet*4)+0] = map(analogRead(pot0), 0, 1023, 255, 0);
-    servoPulse[(activeServoSet*4)+1] = map(analogRead(pot2), 0, 1023, 255, 0);
-    servoPulse[(activeServoSet*4)+2] = map(analogRead(pot1), 0, 1023, 255, 0);
-    servoPulse[(activeServoSet*4)+3] = map(analogRead(pot3), 0, 1023, 255, 0);
+    servoPulse[(activeServoSet*4)+0] = map(analogRead(pot0), 0, 1023, 0, 255);
+    servoPulse[(activeServoSet*4)+1] = map(analogRead(pot1), 0, 1023, 0, 255);
+    servoPulse[(activeServoSet*4)+2] = map(analogRead(pot2), 0, 1023, 0, 255);
+    servoPulse[(activeServoSet*4)+3] = map(analogRead(pot3), 0, 1023, 0, 255);
   #endif
 
   #ifdef DIGITAL_ENCODERS_READ
@@ -383,10 +384,10 @@ void loop() {
 #ifdef USE_PWM_DRIVER
   if(pwmAvailable) {
     //Using the servo driver board, set the active servos to the position  specified by the potentiometers
-    pwm.setPWM((activeServoSet*4)+0, 0, servoPulse[(activeServoSet*4)+0]);
-    pwm.setPWM((activeServoSet*4)+1, 0, servoPulse[(activeServoSet*4)+1]);
-    pwm.setPWM((activeServoSet*4)+2, 0, servoPulse[(activeServoSet*4)+2]);
-    pwm.setPWM((activeServoSet*4)+3, 0, servoPulse[(activeServoSet*4)+3]);
+    pwm.setPWM((activeServoSet*4)+0, 0, map(servoPulse[(activeServoSet*4)+0], 0, 255, 0, 1023));
+    pwm.setPWM((activeServoSet*4)+1, 0, map(servoPulse[(activeServoSet*4)+1], 0, 255, 0, 1023));
+    pwm.setPWM((activeServoSet*4)+2, 0, map(servoPulse[(activeServoSet*4)+2], 0, 255, 0, 1023));
+    pwm.setPWM((activeServoSet*4)+3, 0, map(servoPulse[(activeServoSet*4)+3], 0, 255, 0, 1023));
   }
 #endif  
   //delay(150);
