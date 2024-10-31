@@ -384,10 +384,10 @@ void loop() {
 #ifdef USE_PWM_DRIVER
   if(pwmAvailable) {
     //Using the servo driver board, set the active servos to the position  specified by the potentiometers
-    pwm.setPWM((activeServoSet*4)+0, 0, map(servoPulse[(activeServoSet*4)+0], 0, 255, 0, 1023));
-    pwm.setPWM((activeServoSet*4)+1, 0, map(servoPulse[(activeServoSet*4)+1], 0, 255, 0, 1023));
-    pwm.setPWM((activeServoSet*4)+2, 0, map(servoPulse[(activeServoSet*4)+2], 0, 255, 0, 1023));
-    pwm.setPWM((activeServoSet*4)+3, 0, map(servoPulse[(activeServoSet*4)+3], 0, 255, 0, 1023));
+    pwm.setPWM((activeServoSet*4)+0, 0, map(servoPulse[(activeServoSet*4)+0], 0, 255, 0, 800));
+    pwm.setPWM((activeServoSet*4)+1, 0, map(servoPulse[(activeServoSet*4)+1], 0, 255, 0, 800));
+    pwm.setPWM((activeServoSet*4)+2, 0, map(servoPulse[(activeServoSet*4)+2], 0, 255, 0, 800));
+    pwm.setPWM((activeServoSet*4)+3, 0, map(servoPulse[(activeServoSet*4)+3], 0, 255, 0, 800));
   }
 #endif  
   //delay(150);
