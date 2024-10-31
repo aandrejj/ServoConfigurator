@@ -8,6 +8,7 @@
 #define USE_PWM_DRIVER
 //#define USE_RF_REMOTE
 #define ANALOG_POTENTIOMENTERS_READ
+//#define ANALOG_UP_DOWN_BUTTONS
 //#define DIGITAL_ENCODERS_READ 
 
 
@@ -54,9 +55,14 @@ ST7735 tft = ST7735(         6,          7,          13,           11,          
   #define pot1  A2
   #define pot2  A1
   #define pot3  A3
+#endif 
+
+#ifdef ANALOG_UP_DOWN_BUTTONS
   #define upButtonPin  A4
   #define downButtonPin  A5
-
+#else
+  #define upButtonPin  5
+  #define downButtonPin  9
 #endif
 
 #ifdef DIGITAL_ENCODERS_READ
@@ -203,9 +209,13 @@ void setup() {
     pinMode(pot1, INPUT);
     pinMode(pot2, INPUT);
     pinMode(pot3, INPUT);
-
+  #endif
+  #ifdef ANALOG_UP_DOWN_BUTTONS
     pinMode(  upButtonPin, INPUT); //INPUT_PULLUP);
     pinMode(downButtonPin, INPUT); // INPUT_PULLUP);
+  #else
+    pinMode(  upButtonPin, INPUT_PULLUP);
+    pinMode(downButtonPin, INPUT_PULLUP);
   #endif
 
 //Set background colour
@@ -462,17 +472,21 @@ void loop_servoSet_BTN_Select(unsigned long currentMillis){
       upButtonState = digitalRead(upButtonPin);
       downButtonState = digitalRead(downButtonPin);
     #endif
-    #ifdef DIGITAL_ENCODERS_READ
-      //upButtonState = digitalRead(upButtonPin);
-      //downButtonState = digitalRead(downButtonPin);
-        upButtonState = (analogRead(ANALOG_BUTTON_UP  )>127 ? HIGH : LOW);
+    //#ifdef DIGITAL_ENCODERS_READ
+    #ifdef ANALOG_UP_DOWN_BUTTONS
+      upButtonState = (analogRead(ANALOG_BUTTON_UP  )>127 ? HIGH : LOW);
       downButtonState = (analogRead(ANALOG_BUTTON_DOWN)>127 ? HIGH : LOW);
+    #else
+      upButtonState = digitalRead(upButtonPin);
+      downButtonState = digitalRead(downButtonPin);
     #endif
+
     if (upButtonState == LOW){
        activeServoSet ++;
        if (activeServoSet >3){
         activeServoSet = 0;
        }
+        //Serial.println("Button up pressed");
         tft.fillRect(95, 0, 30, 160, BLACK);
         tft.drawString(95, ((activeServoSet*40)+3), "<", WHITE, 4);
         delay(150);
@@ -482,6 +496,7 @@ void loop_servoSet_BTN_Select(unsigned long currentMillis){
       if (activeServoSet >3){
         activeServoSet = 3;
       }
+        //Serial.println("Button down pressed");
         tft.fillRect(95, 0, 30, 160, BLACK);
         tft.drawString(95, ((activeServoSet*40)+3), "<", WHITE, 4);
         delay(150);
