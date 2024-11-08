@@ -408,10 +408,10 @@ void loop() {
 #ifdef USE_PWM_DRIVER
   if(pwmAvailable) {
     //Using the servo driver board, set the active servos to the position  specified by the potentiometers
-    pwm.setPWM((activeServoSet*LEFT_ARROW_STEP)+0, 0, servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0]);
-    pwm.setPWM((activeServoSet*LEFT_ARROW_STEP)+1, 0, servoPulse[(activeServoSet*LEFT_ARROW_STEP)+1]);
-    pwm.setPWM((activeServoSet*LEFT_ARROW_STEP)+2, 0, servoPulse[(activeServoSet*LEFT_ARROW_STEP)+2]);
-    pwm.setPWM((activeServoSet*LEFT_ARROW_STEP)+3, 0, servoPulse[(activeServoSet*LEFT_ARROW_STEP)+3]);
+    pwm.setPWM((activeServoSet*LEFT_ARROW_STEP)+0, 0, map(servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0], 0, 255, 0, 1023));
+    pwm.setPWM((activeServoSet*LEFT_ARROW_STEP)+1, 0, map(servoPulse[(activeServoSet*LEFT_ARROW_STEP)+1], 0, 255, 0, 1023));
+    pwm.setPWM((activeServoSet*LEFT_ARROW_STEP)+2, 0, map(servoPulse[(activeServoSet*LEFT_ARROW_STEP)+2], 0, 255, 0, 1023));
+    pwm.setPWM((activeServoSet*LEFT_ARROW_STEP)+3, 0, map(servoPulse[(activeServoSet*LEFT_ARROW_STEP)+3], 0, 255, 0, 1023));
   }
 #endif  
   //delay(150);
@@ -495,15 +495,18 @@ void ReadHwData() {
   mydata_send.servoSet = activeServoSet;
 
   mydata_send.s1min = servoPulse[ 0];
-  //mydata_send.s1mid = servoPulse[ 1];
-  //mydata_send.s1curr= servoPulse[ 2];
-  mydata_send.s1max = servoPulse[ 1];
+  mydata_send.s2min = servoPulse[ 1];
 
-  mydata_send.s2min = servoPulse[ 2];
-  //mydata_send.s05 = servoPulse[ 5];
-  //mydata_send.s06 = servoPulse[ 6];
+  mydata_send.s1max = servoPulse[ 2];
   mydata_send.s2max = servoPulse[ 3];
 
+//mydata_send.s1mid = servoPulse[ 4];
+//mydata_send.s2mid = servoPulse[ 5];
+  
+//mydata_send.s1curr = servoPulse[ 6];
+//mydata_send.s2curr = servoPulse[ 7];
+
+  
   mydata_send.devType =  2; // mode:  0 = fourSticksController (8 chanels) ,   1 = ServoConfigurator (16 chanels) , 2 = MinMaxServoConfig (min max for 2 chanels)
   //mydata_send.flags = 0;
 
