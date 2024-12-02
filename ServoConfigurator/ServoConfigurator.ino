@@ -4,15 +4,17 @@
 *   Put the TFT18 folder from the download package in Documents > Arduino > Libraries
 *   Install Adafruit PWM servo driver library from the library manager (From inside arduino IDE > Tools > Manage Libraries > Search for "Adafruit PWM")
 */
+#include <Arduino.h>
 
 //#define USE_PWM_DRIVER
 #define USE_RF_REMOTE
-#define ANALOG_POTENTIOMENTERS_READ
+//#define ANALOG_POTENTIOMENTERS_READ
 //#define DIGITAL_ENCODERS_READ 
+#define TREE_ENCODERS_ONE_POTENTIOMETER_IN_LINE
 
 #include "Servo_Min_Max.h"
 
-#ifdef DIGITAL_ENCODERS_READ
+#if defined(DIGITAL_ENCODERS_READ) || defined (TREE_ENCODERS_ONE_POTENTIOMETER_IN_LINE)
   #include <Encoder.h>  //  Encoder Library,  https://github.com/PaulStoffregen/Encoder ,  http://www.pjrc.com/teensy/td_libs_Encoder.html
 #endif
 
@@ -32,11 +34,11 @@
 
 
 //#define OLED_RESET 4
-#define DISP_CS    6
-#define DISP_RS    7
-#define DISP_RST   8
-#define DISP_SID   4
-#define DISP_SCLK  5
+#define DISP_CS    6 //CS   -CS
+#define DISP_RS    7 //A0   -RS
+#define DISP_RST   8 //RESET-RST
+#define DISP_SID   4 //SDA  -SDA
+#define DISP_SCLK  5 //SCK  -SCK
 #define LEFT_ARROW_SIZE  2
 #define LEFT_ARROW_STEP  2
 
@@ -50,45 +52,127 @@
   Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 #endif
 
-#ifdef ANALOG_POTENTIOMENTERS_READ
-  //Pin Definitions
-  #define pot0  A0
-  #define pot1  A2
-  #define pot2  A1
-  #define pot3  A3
-  #define upButtonPin  A4
-  #define downButtonPin  A5
-  #define minMidMAX_SwitchPin A6 //flag0, flag1
-  #define fireButtonPin A7 //flag2
+  #ifdef ANALOG_POTENTIOMENTERS_READ
+    //Pin Definitions
+    #define pot0  A0
+    #define pot1  A2
+    #define pot2  A1
+    #define pot3  A3
+    #define upButtonPin  A4
+    #define downButtonPin  A5
+    #define minMidMAX_SwitchPin A6 //flag0, flag1
+    #define fireButtonPin A7 //flag2
+  #endif
+
+  #ifdef DIGITAL_ENCODERS_READ
+    #define ANALOG_BUTTON_UP   A0
+    #define ANALOG_BUTTON_DOWN A1
+
+    #define ROTARY_ENCODER1_PIN1 A2
+    #define ROTARY_ENCODER1_PIN2 A3
+    //#define ROTARY_ENCODER1_KEY  4
+
+    #define ROTARY_ENCODER2_PIN1 3
+    #define ROTARY_ENCODER2_PIN2 2
+    //#define ROTARY_ENCODER2_KEY  4
+    #define ROTARY_ENCODER3_PIN1 A4
+    #define ROTARY_ENCODER3_PIN2 A5
+    //#define ROTARY_ENCODER3_KEY  4
+    #define ROTARY_ENCODER4_PIN1 5
+    #define ROTARY_ENCODER4_PIN2 4
+    //#define ROTARY_ENCODER4_KEY  4
+  #endif
+
+#ifdef TREE_ENCODERS_ONE_POTENTIOMETER_IN_LINE
+    #define pot0  A0
+    #define pot1  A1
+
+    #define upButtonPin  37
+    #define downButtonPin  35
+
+    #define minMidMAX_SwitchPin A2 //flag0, flag1
+    #define fireButtonPin 34 //flag2
+
+    #define ROTARY_ENCODER_MIN1_PIN1 30
+    #define ROTARY_ENCODER_MIN1_PIN2 31
+
+    #define ROTARY_ENCODER_MID1_PIN1 28
+    #define ROTARY_ENCODER_MID1_PIN2 29
+
+
+    #define ROTARY_ENCODER_MAX1_PIN1 26
+    #define ROTARY_ENCODER_MAX1_PIN2 27
+
+    #define ROTARY_ENCODER_MIN2_PIN1 24
+    #define ROTARY_ENCODER_MIN2_PIN2 25
+
+    #define ROTARY_ENCODER_MID2_PIN1 22
+    #define ROTARY_ENCODER_MID2_PIN2 23
+
+    #define ROTARY_ENCODER_MAX2_PIN1 20
+    #define ROTARY_ENCODER_MAX2_PIN2 21
+
+#endif
+
+#ifdef TREE_ENCODERS_ONE_POTENTIOMETER_IN_LINE
+
+  Encoder myEncMin1(ROTARY_ENCODER_MIN1_PIN1, ROTARY_ENCODER_MIN1_PIN2);
+  Encoder myEncMin2(ROTARY_ENCODER_MIN2_PIN1, ROTARY_ENCODER_MIN2_PIN2);
+
+  Encoder myEncMid1(ROTARY_ENCODER_MID1_PIN1, ROTARY_ENCODER_MID1_PIN2);
+  Encoder myEncMid2(ROTARY_ENCODER_MID2_PIN1, ROTARY_ENCODER_MID2_PIN2);
+  
+  Encoder myEncMax1(ROTARY_ENCODER_MAX1_PIN1, ROTARY_ENCODER_MAX1_PIN2);
+  Encoder myEncMax2(ROTARY_ENCODER_MAX2_PIN1, ROTARY_ENCODER_MAX2_PIN2);
+
+  long newPositionMin1 =0;
+  long newPositionMin2 =0;
+  long newPositionMid1 =0;
+  long newPositionMid2 =0;
+  long newPositionMax1 =0;
+  long newPositionMax2 =0;
+  
+
+  long oldPositionMin1  = -999;
+  long oldPositionMin2  = -999;
+  long oldPositionMid1  = -999;
+  long oldPositionMid2  = -999;
+  long oldPositionMax1  = -999;
+  long oldPositionMax2  = -999;
+  
+  long oldEncoderPositionMin1 =-999;
+  long newEncoderPositionMin1 = 255;
+
+  long oldEncoderPositionMin2 =-999;
+  long newEncoderPositionMin2 = 255;
+
+  long oldEncoderPositionMid1 =-999;
+  long newEncoderPositionMid1 = 255;
+
+  long oldEncoderPositionMid2 =-999;
+  long newEncoderPositionMid2 = 255;
+
+  long oldEncoderPositionMax1 =-999;
+  long newEncoderPositionMax1 = 255;
+
+  long oldEncoderPositionMax2 =-999;
+  long newEncoderPositionMax2 = 255;
 
 #endif
 
 #ifdef DIGITAL_ENCODERS_READ
-  #define ANALOG_BUTTON_UP   A0
-  #define ANALOG_BUTTON_DOWN A1
-
-  #define ROTARY_ENCODER1_PIN1 A2
-  #define ROTARY_ENCODER1_PIN2 A3
-  //#define ROTARY_ENCODER1_KEY  4
-
-  #define ROTARY_ENCODER2_PIN1 3
-  #define ROTARY_ENCODER2_PIN2 2
-  //#define ROTARY_ENCODER2_KEY  4
-  #define ROTARY_ENCODER3_PIN1 A4
-  #define ROTARY_ENCODER3_PIN2 A5
-  //#define ROTARY_ENCODER3_KEY  4
-  #define ROTARY_ENCODER4_PIN1 5
-  #define ROTARY_ENCODER4_PIN2 4
-  //#define ROTARY_ENCODER4_KEY  4
-
   // Change these two numbers to the pins connected to your encoder.
   //   Best Performance: both pins have interrupt capability
   //   Good Performance: only the first pin has interrupt capability
   //   Low Performance:  neither pin has interrupt capability
-  Encoder myEnc1(ROTARY_ENCODER1_PIN1, ROTARY_ENCODER1_PIN2);
-  Encoder myEnc2(ROTARY_ENCODER2_PIN1, ROTARY_ENCODER2_PIN2);
-  Encoder myEnc3(ROTARY_ENCODER3_PIN1, ROTARY_ENCODER3_PIN2);
-  Encoder myEnc4(ROTARY_ENCODER4_PIN1, ROTARY_ENCODER4_PIN2);
+  Encoder myEncMin1(ROTARY_ENCODER_MIN1_PIN1, ROTARY_ENCODER_MIN1_PIN2);
+  Encoder myEncMin2(ROTARY_ENCODER_MIN2_PIN1, ROTARY_ENCODER_MIN2_PIN2);
+
+  Encoder myEncMid1(ROTARY_ENCODER_MID1_PIN1, ROTARY_ENCODER_MID1_PIN2);
+  Encoder myEncMid2(ROTARY_ENCODER_MID2_PIN1, ROTARY_ENCODER_MID2_PIN2);
+  
+  Encoder myEncMax1(ROTARY_ENCODER_MAX1_PIN1, ROTARY_ENCODER_MAX1_PIN2);
+  Encoder myEncMax2(ROTARY_ENCODER_MAX2_PIN1, ROTARY_ENCODER_MAX2_PIN2);
   
   long newPosition1 =0;
   long newPosition2 =0;
@@ -203,7 +287,35 @@ const long interval_writeToDisplay = 350;
 
 #ifdef USE_RF_REMOTE
   const uint64_t my_radio_pipe = 0x0022; //tento istý kód musí mať aj prijímač
-  RF24 radio(10, 9);  //zapojenie CE a CSN pinov
+  /*
+Arduion RF NANO   pinout
+CE   D10
+CSN  D09
+SCK  D13
+MOSI D11
+MISO D12
+ from: RF-Nano-Schematic.pdf
+
+Arduion MEGA  NRF24L01 PA/LNA   pinout
+CE   D10
+CSN  D09
+SCK  D52
+MOSI D51
+MISO D50
+
+ SCK, MOSI, MISO and CS (or SS) pins. Those pins are 52, 51, 50 and 53 (defalut) on a Mega.
+from: https://forum.arduino.cc/t/pin-connection/613444/4  
+
+Hardware SPI Pins:
+ * Arduino Uno   SCK=13, SDA=11
+ * Arduino Nano  SCK=13, SDA=11
+ * Arduino Due   SCK=76, SDA=75
+ * Arduino Mega  SCK=52, SDA=51
+
+*/
+
+
+RF24 radio(10, 9);  //zapojenie CE a CSN pinov //RF24(rf24_gpio_pin_t _cepin, rf24_gpio_pin_t _cspin, uint32_t _spi_speed = RF24_SPI_SPEED);
   //maximalne 32 kanalov
 #endif
 
@@ -251,16 +363,30 @@ void setup() {
     servopulse_initial_conversion();
   #endif
 
+  #ifdef TREE_ENCODERS_ONE_POTENTIOMETER_IN_LINE
+    pinMode(pot0, INPUT);
+    pinMode(pot1, INPUT);
+    pinMode(minMidMAX_SwitchPin, INPUT);
+    
+
+    pinMode(  upButtonPin, INPUT_PULLUP);
+    pinMode(downButtonPin, INPUT_PULLUP);
+    
+    //pinMode(minMidMAX_SwitchPin, INPUT);
+    pinMode(fireButtonPin, INPUT);
+
+  #endif
+
   #ifdef ANALOG_POTENTIOMENTERS_READ
     pinMode(pot0, INPUT);
     pinMode(pot1, INPUT);
     pinMode(pot2, INPUT);
-    pinMode(pot3, INPUT);
-
-    pinMode(  upButtonPin, INPUT); //INPUT_PULLUP);
-    pinMode(downButtonPin, INPUT); // INPUT_PULLUP);
     
-    //pinMode(minMidMAX_SwitchPin, INPUT);
+
+    pinMode(  upButtonPin, INPUT_PULLUP);
+    pinMode(downButtonPin, INPUT_PULLUP);
+    
+    pinMode(minMidMAX_SwitchPin, INPUT);
     pinMode(fireButtonPin, INPUT);
 
   #endif
@@ -292,7 +418,12 @@ void loop() {
   unsigned long currentMillis = millis();
   //Run function to see if buttons have been pressed, and pick a servo set accordingly
   loop_servoSet_BTN_Select(currentMillis);
-  #ifdef ANALOG_POTENTIOMENTERS_READ
+
+  #if defined(TREE_ENCODERS_ONE_POTENTIOMETER_IN_LINE)
+      servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0] = map(analogRead(pot0), 0, 1023, 255, 0);
+      servoPulse[(activeServoSet*LEFT_ARROW_STEP)+2] = map(analogRead(pot1), 0, 1023, 255, 0);
+
+  #elif derined(ANALOG_POTENTIOMENTERS_READ)
     //Record the positions of all servos mapped to a pulsewidth of between 0 and 255
     if(LEFT_ARROW_STEP>2) {
       servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0] = map(analogRead(pot0), 0, 1023, 255, 0);
@@ -306,9 +437,7 @@ void loop() {
       servoPulse[2] = map(analogRead(pot2), 0, 1023, 255, 0);
       servoPulse[3] = map(analogRead(pot3), 0, 1023, 255, 0);
     }
-  #endif
-
-  #ifdef DIGITAL_ENCODERS_READ
+  #elif defined(DIGITAL_ENCODERS_READ)
     ////Read endoders and compute values for all servos.
     ////rotary encoder handling
     //--------------------------------------------------------------------------
@@ -562,15 +691,11 @@ void loop_writePulsesToDisplay (unsigned long currentMillis){
 void loop_servoSet_BTN_Select(unsigned long currentMillis){
   if (currentMillis - previousMillis_BTN_Select >= interval_BTN_Select) {  // start timed event for read and send
     previousMillis_BTN_Select = currentMillis;
-    #ifdef ANALOG_POTENTIOMENTERS_READ
+    #if defined(ANALOG_POTENTIOMENTERS_READ) || defined (TREE_ENCODERS_ONE_POTENTIOMETER_IN_LINE)
       upButtonState = digitalRead(upButtonPin);
       downButtonState = digitalRead(downButtonPin);
 
       analogValue = analogRead(minMidMAX_SwitchPin);
-      //if(prevAnalogValue != analogValue){
-      //  Serial.println("loop_servoSet_BTN_Select: analogValue="+String(analogValue));
-      //  prevAnalogValue = analogValue;
-      //}
 
       if(analogValue < 100) minMidMAXState = 0;
       else if(analogValue > 900) minMidMAXState = 2;
@@ -590,13 +715,14 @@ void loop_servoSet_BTN_Select(unsigned long currentMillis){
       previousFireBtnState = fireBtnState;
 
     #endif
+
     #ifdef DIGITAL_ENCODERS_READ
       //upButtonState = digitalRead(upButtonPin);
       //downButtonState = digitalRead(downButtonPin);
         upButtonState = (analogRead(ANALOG_BUTTON_UP  )>127 ? HIGH : LOW);
       downButtonState = (analogRead(ANALOG_BUTTON_DOWN)>127 ? HIGH : LOW);
-
     #endif
+
     if (upButtonState == LOW){
        activeServoSet ++;
        if (activeServoSet >((16/LEFT_ARROW_STEP) - 1)){
