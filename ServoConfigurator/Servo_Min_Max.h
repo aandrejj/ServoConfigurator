@@ -1,3 +1,11 @@
+#define RotEnc_Row1_MIN 0
+#define RotEnc_Row1_MID 1
+#define RotEnc_Row1_MAX 2
+
+#define RotEnc_Row2_MIN 3
+#define RotEnc_Row2_MID 4
+#define RotEnc_Row2_MAX 5
+
 
 #define SERVO_MIN_eyeLeftUD         175 //hore  0 
 #define SERVO_MID_eyeLeftUD         340
