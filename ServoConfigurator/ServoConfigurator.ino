@@ -130,40 +130,6 @@
   long oldPosition[6]= {-999, -999, -999, -999, -999, -999};
   long oldEncoderPosition[6]= {-999, -999, -999, -999, -999, -999};
   long newEncoderPosition[6] = {255,  255,  255,  255,  255,  255};
-
-  /*
-  long newPositionMin1 =0;
-  long newPositionMin2 =0;
-  long newPositionMid1 =0;
-  long newPositionMid2 =0;
-  long newPositionMax1 =0;
-  long newPositionMax2 =0;
-
-  long oldPositionMin1  = -999;
-  long oldPositionMin2  = -999;
-  long oldPositionMid1  = -999;
-  long oldPositionMid2  = -999;
-  long oldPositionMax1  = -999;
-  long oldPositionMax2  = -999;
-  
-  long oldEncoderPositionMin1 =-999;
-  long newEncoderPositionMin1 = 255;
-
-  long oldEncoderPositionMin2 =-999;
-  long newEncoderPositionMin2 = 255;
-
-  long oldEncoderPositionMid1 =-999;
-  long newEncoderPositionMid1 = 255;
-
-  long oldEncoderPositionMid2 =-999;
-  long newEncoderPositionMid2 = 255;
-
-  long oldEncoderPositionMax1 =-999;
-  long newEncoderPositionMax1 = 255;
-
-  long oldEncoderPositionMax2 =-999;
-  long newEncoderPositionMax2 = 255;
-  */
 #endif
 
 #ifdef DIGITAL_ENCODERS_READ
@@ -196,16 +162,7 @@
   //long oldEncoderPosition1 =-999;
   
   long newEncoderPosition[6] = {255,  255,  255,  255,  255,  255};
-  //long newEncoderPosition1 = 255;
 
-  //long oldEncoderPosition2 =-999;
-  //long newEncoderPosition2 = 255;
-
-  //long oldEncoderPosition3 =-999;
-  //long newEncoderPosition3 = 255;
-
-  //long oldEncoderPosition4 =-999;
-  //long newEncoderPosition4 = 255;
 #endif
 
 // Color definitions
@@ -431,15 +388,15 @@ void loop() {
   loop_servoSet_BTN_Select(currentMillis);
 
   #if defined(TREE_ENCODERS_ONE_POTENTIOMETER_IN_LINE)
-      RotEnc_EvaluateIncrement(&myEncMin1, RotEnc_Row1_MIN, 4, (activeServoSet*LEFT_ARROW_STEP)+0);
-      RotEnc_EvaluateIncrement(&myEncMid1, RotEnc_Row1_MID, 4, (activeServoSet*LEFT_ARROW_STEP)+1);
+      RotEnc_EvaluateIncrement(&myEncMin1, RotEnc_Row1_MIN, 2, (activeServoSet*LEFT_ARROW_STEP)+0);
+      RotEnc_EvaluateIncrement(&myEncMid1, RotEnc_Row1_MID, 2, (activeServoSet*LEFT_ARROW_STEP)+1);
       servoPulse[(activeServoSet*LEFT_ARROW_STEP)+2] = map(analogRead(pot0), 0, 1023, 255, 0);
-      RotEnc_EvaluateIncrement(&myEncMax1, RotEnc_Row1_MAX, 4, (activeServoSet*LEFT_ARROW_STEP)+3);
+      RotEnc_EvaluateIncrement(&myEncMax1, RotEnc_Row1_MAX, 2, (activeServoSet*LEFT_ARROW_STEP)+3);
 
-      RotEnc_EvaluateIncrement(&myEncMin2, RotEnc_Row2_MIN, 4, (activeServoSet*LEFT_ARROW_STEP)+4);
-      RotEnc_EvaluateIncrement(&myEncMid2, RotEnc_Row2_MID, 4, (activeServoSet*LEFT_ARROW_STEP)+5);
+      RotEnc_EvaluateIncrement(&myEncMin2, RotEnc_Row2_MIN, 2, (activeServoSet*LEFT_ARROW_STEP)+4);
+      RotEnc_EvaluateIncrement(&myEncMid2, RotEnc_Row2_MID, 2, (activeServoSet*LEFT_ARROW_STEP)+5);
       servoPulse[(activeServoSet*LEFT_ARROW_STEP)+6] = map(analogRead(pot1), 0, 1023, 255, 0);
-      RotEnc_EvaluateIncrement(&myEncMax2, RotEnc_Row2_MAX, 4, (activeServoSet*LEFT_ARROW_STEP)+7);
+      RotEnc_EvaluateIncrement(&myEncMax2, RotEnc_Row2_MAX, 2, (activeServoSet*LEFT_ARROW_STEP)+7);
 
   #elif defined(ANALOG_POTENTIOMENTERS_READ)
     //Record the positions of all servos mapped to a pulsewidth of between 0 and 255
@@ -574,21 +531,23 @@ int16_t RotEnc_EvaluateIncrement(Encoder *myEnc, uint16_t encoderIndex, uint16_t
       //Serial.println("encoder newPosition[encoderIndex] = "+String(newPosition[encoderIndex]));
       newEncoderPosition[encoderIndex] = (newPosition[encoderIndex]/divider);
       if(oldEncoderPosition[encoderIndex] != newEncoderPosition[encoderIndex]) {
-        Serial.println("newEncoderPosition[encoderIndex] "+String(newEncoderPosition[encoderIndex]));
-        if(newEncoderPosition[encoderIndex] < oldEncoderPosition[encoderIndex]) {
+        Serial.println("RotEnc_EvaluateIncrement: newEncoderPosition["+String(encoderIndex)+"] ="+String(newEncoderPosition[encoderIndex]));
+        if(newEncoderPosition[encoderIndex] > oldEncoderPosition[encoderIndex]) {
           increment = 1;
           //if(servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0]<255){
           //  servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0] =servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0] +1;
-          if(servoPulse[servoPulseIndex]<255){
+          if(servoPulse[servoPulseIndex]<255){ 
             servoPulse[servoPulseIndex] = servoPulse[servoPulseIndex] +1;
+            Serial.println("RotEnc_EvaluateIncrement +: servoPulse["+String(servoPulseIndex)+"] = "+String(servoPulse[servoPulseIndex]));
           }
         }
-        if(newEncoderPosition[encoderIndex] > oldEncoderPosition[encoderIndex]) {
+        if(newEncoderPosition[encoderIndex] < oldEncoderPosition[encoderIndex]) {
           increment = -1;
           //if(servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0]>0){
           //  servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0] =servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0] -1;
           if(servoPulse[servoPulseIndex]>0){
             servoPulse[servoPulseIndex] = servoPulse[servoPulseIndex] -1;
+            Serial.println("RotEnc_EvaluateIncrement -: servoPulse["+String(servoPulseIndex)+"] = "+String(servoPulse[servoPulseIndex]));
           }
         }
         oldEncoderPosition[encoderIndex] = newEncoderPosition[encoderIndex];
