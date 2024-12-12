@@ -1,3 +1,7 @@
+#define LABEL_FORM_MIN 0
+#define LABEL_FORM_MID 1
+#define LABEL_FORM_MAX 2
+
 #define RotEnc_Row1_MIN 0
 #define RotEnc_Row1_MID 1
 #define RotEnc_Row1_MAX 2
