@@ -48,9 +48,36 @@
   //           ST7735(uint8_t CS, uint8_t RS, uint8_t RST);
 //ST7735 tft = ST7735(6, 7, 8);    
 
-#ifdef USE_PWM_DRIVER
-  Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
+#ifdef USE_RF_REMOTE
+  const uint64_t my_radio_pipe = 0x0022; //tento istý kód musí mať aj prijímač
+  /*
+Arduion RF NANO   pinout
+CE   D10
+CSN  D09
+SCK  D13
+MOSI D11
+MISO D12
+ from: RF-Nano-Schematic.pdf
+
+Arduion MEGA  NRF24L01 PA/LNA   pinout
+CE   D10
+CSN  D09
+SCK  D52
+MOSI D51
+MISO D50
+
+ SCK, MOSI, MISO and CS (or SS) pins. Those pins are 52, 51, 50 and 53 (defalut) on a Mega.
+from: https://forum.arduino.cc/t/pin-connection/613444/4  
+
+Hardware SPI Pins:
+ * Arduino Uno   SCK=13, SDA=11
+ * Arduino Nano  SCK=13, SDA=11
+ * Arduino Due   SCK=76, SDA=75
+ * Arduino Mega  SCK=52, SDA=51
+
+*/
 #endif
+
 
   #ifdef ANALOG_POTENTIOMENTERS_READ
     //Pin Definitions
@@ -86,38 +113,40 @@
 #ifdef TREE_ENCODERS_ONE_POTENTIOMETER_IN_LINE
     #define pot0  A0
     #define pot1  A1
-
-    #define upButtonPin  37
-    #define downButtonPin  35
-
     #define minMidMAX_SwitchPin A2 //flag0, flag1
+
     #define fireButtonPin 34 //flag2
+    #define downButtonPin 35
+    #define upButtonPin   37
+    
+    #define ROTARY_ENCODER_MIN1_PIN1 3
+    #define ROTARY_ENCODER_MIN1_PIN2 22
 
-    #define ROTARY_ENCODER_MIN1_PIN1 30
-    #define ROTARY_ENCODER_MIN1_PIN2 31
-
-    #define ROTARY_ENCODER_MID1_PIN1 28
-    #define ROTARY_ENCODER_MID1_PIN2 29
+    #define ROTARY_ENCODER_MID1_PIN1 19
+    #define ROTARY_ENCODER_MID1_PIN2 25
 
 
-    #define ROTARY_ENCODER_MAX1_PIN1 26
+    #define ROTARY_ENCODER_MAX1_PIN1 21
     #define ROTARY_ENCODER_MAX1_PIN2 27
 
-    #define ROTARY_ENCODER_MIN2_PIN1 24
-    #define ROTARY_ENCODER_MIN2_PIN2 25
+    #define ROTARY_ENCODER_MIN2_PIN1 2
+    #define ROTARY_ENCODER_MIN2_PIN2 23
 
-    #define ROTARY_ENCODER_MID2_PIN1 22
-    #define ROTARY_ENCODER_MID2_PIN2 23
+    #define ROTARY_ENCODER_MID2_PIN1 18
+    #define ROTARY_ENCODER_MID2_PIN2 24
 
     #define ROTARY_ENCODER_MAX2_PIN1 20
-    #define ROTARY_ENCODER_MAX2_PIN2 21
+    #define ROTARY_ENCODER_MAX2_PIN2 26
 
     #define ROTARY_DIVIDER 4
 
 #endif
 
 #ifdef TREE_ENCODERS_ONE_POTENTIOMETER_IN_LINE
-
+  // Change these two numbers to the pins connected to your encoder.
+  //   Best Performance: both pins have interrupt capability
+  //   Good Performance: only the first pin has interrupt capability
+  //   Low Performance:  neither pin has interrupt capability
   Encoder myEncMin1(ROTARY_ENCODER_MIN1_PIN1, ROTARY_ENCODER_MIN1_PIN2);
   Encoder myEncMid1(ROTARY_ENCODER_MID1_PIN1, ROTARY_ENCODER_MID1_PIN2);
 
@@ -276,37 +305,13 @@ const long interval_SerialLine = 150;
 unsigned long previousMillis_writeToDisplay = 0;
 const long interval_writeToDisplay = 350;
 
+
+#ifdef USE_PWM_DRIVER
+  Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
+#endif
+
 #ifdef USE_RF_REMOTE
-  const uint64_t my_radio_pipe = 0x0022; //tento istý kód musí mať aj prijímač
-  /*
-Arduion RF NANO   pinout
-CE   D10
-CSN  D09
-SCK  D13
-MOSI D11
-MISO D12
- from: RF-Nano-Schematic.pdf
-
-Arduion MEGA  NRF24L01 PA/LNA   pinout
-CE   D10
-CSN  D09
-SCK  D52
-MOSI D51
-MISO D50
-
- SCK, MOSI, MISO and CS (or SS) pins. Those pins are 52, 51, 50 and 53 (defalut) on a Mega.
-from: https://forum.arduino.cc/t/pin-connection/613444/4  
-
-Hardware SPI Pins:
- * Arduino Uno   SCK=13, SDA=11
- * Arduino Nano  SCK=13, SDA=11
- * Arduino Due   SCK=76, SDA=75
- * Arduino Mega  SCK=52, SDA=51
-
-*/
-
-
-RF24 radio(10, 9);  //zapojenie CE a CSN pinov //RF24(rf24_gpio_pin_t _cepin, rf24_gpio_pin_t _cspin, uint32_t _spi_speed = RF24_SPI_SPEED);
+  RF24 radio(10, 9);  //zapojenie CE a CSN pinov //RF24(rf24_gpio_pin_t _cepin, rf24_gpio_pin_t _cspin, uint32_t _spi_speed = RF24_SPI_SPEED);
   //maximalne 32 kanalov
 #endif
 
@@ -368,10 +373,10 @@ void setup() {
 
     myEncMin1.write(newEncoderPosition[0]);
     myEncMid1.write(newEncoderPosition[1]);
-    myEncMax1.write(newEncoderPosition[3]);
-    myEncMin2.write(newEncoderPosition[4]);
-    myEncMid2.write(newEncoderPosition[5]);
-    myEncMax2.write(newEncoderPosition[7]);
+    myEncMax1.write(newEncoderPosition[2]);
+    myEncMin2.write(newEncoderPosition[3]);
+    myEncMid2.write(newEncoderPosition[4]);
+    myEncMax2.write(newEncoderPosition[5]);
 
 
 
