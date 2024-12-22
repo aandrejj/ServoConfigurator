@@ -1,7 +1,19 @@
+#define LABEL_FORM_MIN 0
+#define LABEL_FORM_MID 1
+#define LABEL_FORM_MAX 2
+
+#define RotEnc_Row1_MIN 0
+#define RotEnc_Row1_MID 1
+#define RotEnc_Row1_MAX 2
+
+#define RotEnc_Row2_MIN 3
+#define RotEnc_Row2_MID 4
+#define RotEnc_Row2_MAX 5
+
 
 #define SERVO_MIN_eyeLeftUD         175 //hore  0 
 #define SERVO_MID_eyeLeftUD         340
-#define SERVO_MAX_eyeLeftUD         475 //dole  255
+#define SERVO_MAX_eyeLeftUD         999 //475 //dole  255
 
 #define SERVO_MIN_eyeLeftLR         275
 #define SERVO_MID_eyeLeftLR         370
