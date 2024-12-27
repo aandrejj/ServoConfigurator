@@ -6,11 +6,17 @@
 */
 #include <Arduino.h>
 
+#include "version_num.h"
+#include "build_defs.h"
+
 //#define USE_PWM_DRIVER
 #define USE_RF_REMOTE
 //#define ANALOG_POTENTIOMENTERS_READ
 //#define DIGITAL_ENCODERS_READ 
 #define TREE_ENCODERS_ONE_POTENTIOMETER_IN_LINE
+//#define  SEND_FROM_0_TO_1023
+#define  SEND_FROM_0_TO_255
+
 
 #include "Servo_Min_Max.h"
 
@@ -31,6 +37,30 @@
 #endif
 
 #include "RxTx_dataStructures.h"
+
+// want something like: 0.2.20241124.1502
+const unsigned char completeVersion[] =
+{
+    VERSION_MAJOR_INIT,
+    '.',
+    VERSION_MINOR_INIT,
+    //'-', 'V', '-',
+    '.',
+    BUILD_YEAR_CH0, BUILD_YEAR_CH1, BUILD_YEAR_CH2, BUILD_YEAR_CH3,
+    //'-',
+    BUILD_MONTH_CH0, BUILD_MONTH_CH1,
+    //'-',
+    BUILD_DAY_CH0, BUILD_DAY_CH1,
+    //'T',
+      '.',
+    BUILD_HOUR_CH0, BUILD_HOUR_CH1,
+    //':',
+    BUILD_MIN_CH0, BUILD_MIN_CH1,
+    //':',
+    //BUILD_SEC_CH0, BUILD_SEC_CH1,
+    '\0'
+};
+
 
 
 //#define OLED_RESET 4
@@ -306,11 +336,18 @@ void setup() {
   
   //Serial.begin(9600);
   Serial.begin(Baud);
-  delay(200);
-  
+  //delay(200);
+  while (!Serial) {
+    ;  // wait for serial port to connect. Needed for native USB port only
+  }
   Serial.println(" ");
   Serial.print("Sketch:   ");   Serial.println(__FILE__);
   Serial.print("Uploaded: ");   Serial.println(__DATE__);
+  Serial.println("------------------------------------------");
+  Serial.print("Version: ");   Serial.write(completeVersion, strlen(completeVersion));
+  Serial.println("");
+  Serial.println("------------------------------------------");
+  
 
   Serial.println("setup: tft.initR()...");
   tft.initR();
@@ -410,11 +447,21 @@ void loop() {
       origAnalogValuePot0 = analogRead(pot0);
       analogValuePot0 = constrain(origAnalogValuePot0, 0, 1023);
       servoIndexForAnalog = (((activeServoSet*LEFT_ARROW_STEP)) + (16 * 0));
-
-      servoPulse[((servoIndexForAnalog) + (16 * 3))] = 
-        (analogValuePot0)<512 ? 
-          (map(analogValuePot0,   0, 512, servoPulse[(servoIndexForAnalog)           ], servoPulse[(servoIndexForAnalog) + (16 * 1)]) ) 
-        : (map(analogValuePot0, 513, 1023, servoPulse[(servoIndexForAnalog) + (16 * 1)], servoPulse[(servoIndexForAnalog) + (16 * 2)]) );
+#ifdef SEND_FROM_0_TO_255 
+  servoPulse[((servoIndexForAnalog) + (16 * 3))] = 
+    map (analogValuePot0, 0, 1023, 0, 255);
+#else
+  servoPulse[((servoIndexForAnalog) + (16 * 3))] = 
+    (analogValuePot0)<512 ? 
+      (map(analogValuePot0,   0, 512, servoPulse[(servoIndexForAnalog)           ], servoPulse[(servoIndexForAnalog) + (16 * 1)]) ) 
+    : (map(analogValuePot0, 513, 1023, servoPulse[(servoIndexForAnalog) + (16 * 1)], servoPulse[(servoIndexForAnalog) + (16 * 2)]) );
+#endif
+/*
+servoPulse[((servoIndexForAnalog) + (16 * 3))] = 
+        (analogValuePot0)<128 ? 
+          (map(analogValuePot0,   0, 127, servoPulse[(servoIndexForAnalog)           ], servoPulse[(servoIndexForAnalog) + (16 * 1)]) ) 
+        : (map(analogValuePot0, 128, 255, servoPulse[(servoIndexForAnalog) + (16 * 1)], servoPulse[(servoIndexForAnalog) + (16 * 2)]) );
+*/
 
       if(abs(prevAnalogValuePot0 - analogValuePot0)>2) {
         Serial.println("loop:origAnalogValuePot0 = "+String(origAnalogValuePot0)+", analogValuePot0 ="+String (analogValuePot0)+" servoPulse["+String(((servoIndexForAnalog) + (16 * 3)))+"] ="+String(servoPulse[((servoIndexForAnalog) + (16 * 3))])+".");
@@ -620,7 +667,17 @@ void loop_writePulsesToDisplay (unsigned long currentMillis){
           servoPulseIndex = (((activeServoSet*LEFT_ARROW_STEP)+i)) + 48;
           if(prevServoPulse[servoPulseIndex] != servoPulse[servoPulseIndex]) {
             data_changed = true;
-            writeCurrPulsesToDisplay((activeServoSet*LEFT_ARROW_STEP)+i,servoPulse[servoPulseIndex]);
+            #ifdef SEND_FROM_0_TO_255
+              uint16_t origValue_0_255 = servoPulse[((servoIndexForAnalog) + (16 * 3))];
+              uint16_t extrapolatedServoPulse_0_1023 = 
+              (origValue_0_255)<128 ? 
+                (map(origValue_0_255,   0, 127, servoPulse[(servoIndexForAnalog)           ], servoPulse[(servoIndexForAnalog) + (16 * 1)]) ) 
+              : (map(origValue_0_255, 128, 255, servoPulse[(servoIndexForAnalog) + (16 * 1)], servoPulse[(servoIndexForAnalog) + (16 * 2)]) );
+
+              writeCurrPulsesToDisplay((activeServoSet*LEFT_ARROW_STEP)+i, extrapolatedServoPulse_0_1023);
+            #else
+              writeCurrPulsesToDisplay((activeServoSet*LEFT_ARROW_STEP)+i,servoPulse[servoPulseIndex]);
+            #endif
             prevServoPulse[servoPulseIndex] = servoPulse[servoPulseIndex];
           }
 
