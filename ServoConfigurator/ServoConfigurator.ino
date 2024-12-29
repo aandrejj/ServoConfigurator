@@ -6,11 +6,17 @@
 */
 #include <Arduino.h>
 
+#include "version_num.h"
+#include "build_defs.h"
+
 //#define USE_PWM_DRIVER
 #define USE_RF_REMOTE
 //#define ANALOG_POTENTIOMENTERS_READ
 //#define DIGITAL_ENCODERS_READ 
 #define TREE_ENCODERS_ONE_POTENTIOMETER_IN_LINE
+//#define  SEND_FROM_0_TO_1023
+#define  SEND_FROM_0_TO_255
+
 
 #include "Servo_Min_Max.h"
 
@@ -31,6 +37,30 @@
 #endif
 
 #include "RxTx_dataStructures.h"
+
+// want something like: 0.2.20241124.1502
+const unsigned char completeVersion[] =
+{
+    VERSION_MAJOR_INIT,
+    '.',
+    VERSION_MINOR_INIT,
+    //'-', 'V', '-',
+    '.',
+    BUILD_YEAR_CH0, BUILD_YEAR_CH1, BUILD_YEAR_CH2, BUILD_YEAR_CH3,
+    //'-',
+    BUILD_MONTH_CH0, BUILD_MONTH_CH1,
+    //'-',
+    BUILD_DAY_CH0, BUILD_DAY_CH1,
+    //'T',
+      '.',
+    BUILD_HOUR_CH0, BUILD_HOUR_CH1,
+    //':',
+    BUILD_MIN_CH0, BUILD_MIN_CH1,
+    //':',
+    //BUILD_SEC_CH0, BUILD_SEC_CH1,
+    '\0'
+};
+
 
 
 //#define OLED_RESET 4
@@ -152,8 +182,14 @@ Hardware SPI Pins:
 uint16_t servoPulseIndex =0;
 bool data_changed;
 
-uint8_t analogValuePot0 = 0;
-uint8_t prevAnalogValuePot0 = 0;
+uint16_t analogValuePot0 = 0;
+uint16_t prevAnalogValuePot0 = 0;
+
+int prevAnalogValue_3StateSwitch = 0;
+int analogValue_3StateSwitch=0;
+
+
+
 uint8_t servoIndexForAnalog=0;
 
 // Color definitions
@@ -182,9 +218,6 @@ uint8_t fireBtnState = 0;
 uint8_t minMidMAXState = 0;
 uint8_t previousState = 0;
 uint8_t previousFireBtnState = 0;
-
-int prevAnalogValue = 0;
-int analogValue=0;
 
 #ifdef USE_PWM_DRIVER
   bool pwmAvailable = false;
@@ -267,14 +300,14 @@ uint16_t servoPulse[64] =    {
                               };
 
 
-//#define HIGHSPEED 
+#define HIGHSPEED 
 
 #ifdef HIGHSPEED
-  #define Baud 38400   // Serial monitor
-  #define BTBaud 38400 // There is only one speed for configuring HC-05, and that is 38400.
+  #define Baud 19200   // Serial monitor
+  //#define BTBaud 38400 // There is only one speed for configuring HC-05, and that is 38400.
 #else
   #define Baud 9600    // Serial monitor
-  #define BTBaud 4800  // HM-10, HM-19 etc
+  //#define BTBaud 4800  // HM-10, HM-19 etc
 #endif
 
 unsigned long previousMillis_BTN_Select = 0;
@@ -303,11 +336,18 @@ void setup() {
   
   //Serial.begin(9600);
   Serial.begin(Baud);
-  delay(200);
-  
+  //delay(200);
+  while (!Serial) {
+    ;  // wait for serial port to connect. Needed for native USB port only
+  }
   Serial.println(" ");
   Serial.print("Sketch:   ");   Serial.println(__FILE__);
   Serial.print("Uploaded: ");   Serial.println(__DATE__);
+  Serial.println("------------------------------------------");
+  Serial.print("Version: ");   Serial.write(completeVersion, strlen(completeVersion));
+  Serial.println("");
+  Serial.println("------------------------------------------");
+  
 
   Serial.println("setup: tft.initR()...");
   tft.initR();
@@ -393,6 +433,7 @@ void setup() {
 //-------------------------loop------------------------------------------------
 //-------------------------loop------------------------------------------------
 //-------------------------loop------------------------------------------------
+int origAnalogValuePot0;
 void loop() {
   
   unsigned long currentMillis = millis();
@@ -403,17 +444,29 @@ void loop() {
       RotEnc_EvaluateIncrement(&myEncMin1, RotEnc_Row1_MIN, ROTARY_DIVIDER, activeServoSet, LEFT_ARROW_STEP, LABEL_FORM_MIN);
       RotEnc_EvaluateIncrement(&myEncMid1, RotEnc_Row1_MID, ROTARY_DIVIDER, activeServoSet, LEFT_ARROW_STEP, LABEL_FORM_MID);
       
-      analogValuePot0 = constrain(analogRead(pot0), 0, 1024);
+      origAnalogValuePot0 = analogRead(pot0);
+      analogValuePot0 = constrain(origAnalogValuePot0, 0, 1023);
       servoIndexForAnalog = (((activeServoSet*LEFT_ARROW_STEP)) + (16 * 0));
-
-      if(abs(prevAnalogValuePot0 - analogValuePot0)>2) {
-        Serial.println("loop:analogValuePot0 ="+String (analogValuePot0)+" servoPulse["+String(((servoIndexForAnalog) + (16 * 3)))+"] =");
-        prevAnalogValuePot0 = analogValuePot0;
-      }
-      servoPulse[((servoIndexForAnalog) + (16 * 3))] = 
+#ifdef SEND_FROM_0_TO_255 
+  servoPulse[((servoIndexForAnalog) + (16 * 3))] = 
+    map (analogValuePot0, 0, 1023, 0, 255);
+#else
+  servoPulse[((servoIndexForAnalog) + (16 * 3))] = 
+    (analogValuePot0)<512 ? 
+      (map(analogValuePot0,   0, 512, servoPulse[(servoIndexForAnalog)           ], servoPulse[(servoIndexForAnalog) + (16 * 1)]) ) 
+    : (map(analogValuePot0, 513, 1023, servoPulse[(servoIndexForAnalog) + (16 * 1)], servoPulse[(servoIndexForAnalog) + (16 * 2)]) );
+#endif
+/*
+servoPulse[((servoIndexForAnalog) + (16 * 3))] = 
         (analogValuePot0)<128 ? 
           (map(analogValuePot0,   0, 127, servoPulse[(servoIndexForAnalog)           ], servoPulse[(servoIndexForAnalog) + (16 * 1)]) ) 
         : (map(analogValuePot0, 128, 255, servoPulse[(servoIndexForAnalog) + (16 * 1)], servoPulse[(servoIndexForAnalog) + (16 * 2)]) );
+*/
+
+      if(abs(prevAnalogValuePot0 - analogValuePot0)>2) {
+        Serial.println("loop:origAnalogValuePot0 = "+String(origAnalogValuePot0)+", analogValuePot0 ="+String (analogValuePot0)+" servoPulse["+String(((servoIndexForAnalog) + (16 * 3)))+"] ="+String(servoPulse[((servoIndexForAnalog) + (16 * 3))])+".");
+        prevAnalogValuePot0 = analogValuePot0;
+      }
 
       //servoPulse[(activeServoSet*LEFT_ARROW_STEP) + (16 * 3)] = analogRead(pot0); // map(analogRead(pot0), 0, 1023, 255, 0);
       RotEnc_EvaluateIncrement(&myEncMax1, RotEnc_Row1_MAX, ROTARY_DIVIDER, activeServoSet, LEFT_ARROW_STEP, LABEL_FORM_MAX);
@@ -576,7 +629,7 @@ void RF_Line_WriteEvent (unsigned long currentMillis) {
     radio.write(&mydata_send, sizeof(TX_DATA_STRUCTURE));
     //Serial.println("RF_Line_WriteEvent: Data sent");
     
-    //write_succeeded = radio.write(&mydata_send, sizeof(TX_DATA_STRUCTURE));
+    //write_succeeded = radio.write(&mydata_send, sizeof(TX_DATA_STRUCTURE)); 
     //if(write_succeeded) {
     //  Serial.println("RF_Line_WriteEvent: Data sent");
     //} else {
@@ -614,7 +667,17 @@ void loop_writePulsesToDisplay (unsigned long currentMillis){
           servoPulseIndex = (((activeServoSet*LEFT_ARROW_STEP)+i)) + 48;
           if(prevServoPulse[servoPulseIndex] != servoPulse[servoPulseIndex]) {
             data_changed = true;
-            writeCurrPulsesToDisplay((activeServoSet*LEFT_ARROW_STEP)+i,servoPulse[servoPulseIndex]);
+            #ifdef SEND_FROM_0_TO_255
+              uint16_t origValue_0_255 = servoPulse[((servoIndexForAnalog) + (16 * 3))];
+              uint16_t extrapolatedServoPulse_0_1023 = 
+              (origValue_0_255)<128 ? 
+                (map(origValue_0_255,   0, 127, servoPulse[(servoIndexForAnalog)           ], servoPulse[(servoIndexForAnalog) + (16 * 1)]) ) 
+              : (map(origValue_0_255, 128, 255, servoPulse[(servoIndexForAnalog) + (16 * 1)], servoPulse[(servoIndexForAnalog) + (16 * 2)]) );
+
+              writeCurrPulsesToDisplay((activeServoSet*LEFT_ARROW_STEP)+i, extrapolatedServoPulse_0_1023);
+            #else
+              writeCurrPulsesToDisplay((activeServoSet*LEFT_ARROW_STEP)+i,servoPulse[servoPulseIndex]);
+            #endif
             prevServoPulse[servoPulseIndex] = servoPulse[servoPulseIndex];
           }
 
@@ -714,16 +777,20 @@ void loop_servoSet_BTN_Select(unsigned long currentMillis){
       upButtonState = digitalRead(upButtonPin);
       downButtonState = digitalRead(downButtonPin);
 
-      analogValue = analogRead(minMidMAX_SwitchPin);
+      analogValue_3StateSwitch = analogRead(minMidMAX_SwitchPin);
+      if(abs(analogValue_3StateSwitch - prevAnalogValue_3StateSwitch)>20) {
+        Serial.println("3-state-switch Button state: analogValue_3StateSwitch =" + String(analogValue_3StateSwitch)+". ");
+        prevAnalogValue_3StateSwitch = analogValue_3StateSwitch;
+      }
 
-      if(analogValue < 100) minMidMAXState = 0;
-      else if(analogValue > 900) minMidMAXState = 2;
+      if(analogValue_3StateSwitch < 100) minMidMAXState = 0;
+      else if(analogValue_3StateSwitch > 900) minMidMAXState = 2;
       else minMidMAXState = 1;
     
       if(previousState != minMidMAXState) {
     
         previousState = minMidMAXState;
-        Serial.print("Button state: ");
+        Serial.print("3-state-switch Button state: ");
         Serial.println(minMidMAXState);
       }
 
