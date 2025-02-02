@@ -17,7 +17,7 @@
 //#define  SEND_FROM_0_TO_1023
 #define  SEND_FROM_0_TO_255
 
-#define SERVOS_COUNT 18
+#define SERVOS_COUNT 19
 
 #include "Servo_Min_Max.h"
 
@@ -242,7 +242,7 @@ uint16_t prevServoPulse[(4*SERVOS_COUNT)] ={0,0,0,0,0,0,0,0,0,0,
                                                 0,0,0,0,0,0,0,0,0,0,
                                                 0,0,0,0,0,0,0,0,0,0,
                                                 0,0,0,0,0,0,0,0,0,0,
-                                                0,0};
+                                                0,0,0,0,0,0};
 
 uint16_t servoPulse[(4*SERVOS_COUNT)] =    {
                               SERVO_MIN_eyeLeftUD       ,
@@ -269,6 +269,8 @@ uint16_t servoPulse[(4*SERVOS_COUNT)] =    {
                               SERVO_MIN_forheadRight    ,
                               SERVO_MIN_forheadLeft     ,
                               SERVO_MIN_Jaw_UpDown      ,
+                              SERVO_MIN_Head_LeftRight  ,
+                              
                             SERVO_MID_eyeLeftUD         ,
                             SERVO_MID_eyeLeftLR         ,
                             SERVO_MID_eyeRightUD        ,
@@ -280,19 +282,21 @@ uint16_t servoPulse[(4*SERVOS_COUNT)] =    {
                             SERVO_MID_eyebrowRight      ,
                             SERVO_MID_eyebrowLeft       ,
                               
-//                            SERVO_MIN_cheekRight      ,
-//                            SERVO_MIN_cheekLeft       ,
+//                            SERVO_MID_cheekRight      ,
+//                            SERVO_MID_cheekLeft       ,
 
-                              SERVO_MIN_cheekRight_Upper,
-                              SERVO_MIN_cheekLeft_Upper ,
+                              SERVO_MID_cheekRight_Upper,
+                              SERVO_MID_cheekLeft_Upper ,
 
-                              SERVO_MIN_cheekRight_Lower,
-                              SERVO_MIN_cheekLeft_Lower ,
+                              SERVO_MID_cheekRight_Lower,
+                              SERVO_MID_cheekLeft_Lower ,
 
                             SERVO_MID_upperLip          ,
                             SERVO_MID_forheadRight      ,
                             SERVO_MID_forheadLeft       ,
                             SERVO_MID_Jaw_UpDown        ,
+                            SERVO_MID_Head_LeftRight    ,
+
                               SERVO_MAX_eyeLeftUD       ,
                               SERVO_MAX_eyeLeftLR       ,
                               SERVO_MAX_eyeRightUD      ,
@@ -304,19 +308,21 @@ uint16_t servoPulse[(4*SERVOS_COUNT)] =    {
                               SERVO_MAX_eyebrowRight    ,
                               SERVO_MAX_eyebrowLeft     ,
                               
-//                            SERVO_MIN_cheekRight      ,
-//                            SERVO_MIN_cheekLeft       ,
+//                            SERVO_MAX_cheekRight      ,
+//                            SERVO_MAX_cheekLeft       ,
 
-                              SERVO_MIN_cheekRight_Upper,
-                              SERVO_MIN_cheekLeft_Upper ,
+                              SERVO_MAX_cheekRight_Upper,
+                              SERVO_MAX_cheekLeft_Upper ,
 
-                              SERVO_MIN_cheekRight_Lower,
-                              SERVO_MIN_cheekLeft_Lower ,
+                              SERVO_MAX_cheekRight_Lower,
+                              SERVO_MAX_cheekLeft_Lower ,
 
                               SERVO_MAX_upperLip        ,
                               SERVO_MAX_forheadRight    ,
                               SERVO_MAX_forheadLeft     ,
                               SERVO_MAX_Jaw_UpDown      ,
+                              SERVO_MAX_Head_LeftRight  ,
+
                             SERVO_MID_eyeLeftUD         ,
                             SERVO_MID_eyeLeftLR         ,
                             SERVO_MID_eyeRightUD        ,
@@ -328,19 +334,20 @@ uint16_t servoPulse[(4*SERVOS_COUNT)] =    {
                             SERVO_MID_eyebrowRight      ,
                             SERVO_MID_eyebrowLeft       ,
                               
-//                            SERVO_MIN_cheekRight      ,
-//                            SERVO_MIN_cheekLeft       ,
+//                            SERVO_MID_cheekRight      ,
+//                            SERVO_MID_cheekLeft       ,
 
-                              SERVO_MIN_cheekRight_Upper,
-                              SERVO_MIN_cheekLeft_Upper ,
+                              SERVO_MID_cheekRight_Upper,
+                              SERVO_MID_cheekLeft_Upper ,
 
-                              SERVO_MIN_cheekRight_Lower,
-                              SERVO_MIN_cheekLeft_Lower ,
+                              SERVO_MID_cheekRight_Lower,
+                              SERVO_MID_cheekLeft_Lower ,
 
                             SERVO_MID_upperLip          ,
                             SERVO_MID_forheadRight      ,
                             SERVO_MID_forheadLeft       ,
-                            SERVO_MID_Jaw_UpDown
+                            SERVO_MID_Jaw_UpDown  ,
+                            SERVO_MID_Head_LeftRight 
                               };
 
 

@@ -78,6 +78,10 @@
 #define SERVO_MID_Jaw_UpDown        325
 #define SERVO_MAX_Jaw_UpDown        420
 
+#define SERVO_MIN_Head_LeftRight    230
+#define SERVO_MID_Head_LeftRight    326
+#define SERVO_MAX_Head_LeftRight    421
+
 /*
 #define SERVO_MIN_eyeLeftUD         175 //hore  0 
 #define SERVO_MID_eyeLeftUD         340
