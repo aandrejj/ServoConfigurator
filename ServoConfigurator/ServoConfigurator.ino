@@ -17,6 +17,9 @@
 //#define  SEND_FROM_0_TO_1023
 #define  SEND_FROM_0_TO_255
 
+#define SERVOS_COUNT 18
+#define SERVOS_ON_DISPLAY 16
+
 
 #include "Servo_Min_Max.h"
 
@@ -179,6 +182,14 @@ Hardware SPI Pins:
   long newEncoderPosition[3] = {255,  255,  255};
 #endif
 
+#define char_width_x 8
+
+#define char_height_y 8  
+#define char_shift_x  2
+#define chr_point_shift_x  1
+
+
+
 uint16_t servoPulseIndex =0;
 bool data_changed;
 
@@ -203,7 +214,7 @@ const uint16_t RED = 0xf800;
 const uint16_t YELLOW = 0xffe0;
 const uint16_t GREEN = 0x07e0;
 
-uint8_t spacing = 8;
+uint8_t spacing = char_height_y;
 uint8_t yPos = 2;
 uint8_t servoNum = 0;
 char servo[]="S"; //"Srv";//"Servo ";
@@ -220,19 +231,22 @@ uint8_t previousState = 0;
 uint8_t previousFireBtnState = 0;
 
 #ifdef USE_PWM_DRIVER
-  bool pwmAvailable = false;
+  bool pwm1Available = false;
+  bool pwm2Available = false;
 #endif
 
+//#define SERVOPULSE_ARRAY_SIZE  72
 //#define SERVOPULSE_CONVERSION_NEEDED
-uint16_t prevServoPulse[64] ={0,0,0,0,0,0,0,0,0,0,
-                              0,0,0,0,0,0,0,0,0,0,
-                              0,0,0,0,0,0,0,0,0,0,
-                              0,0,0,0,0,0,0,0,0,0,
-                              0,0,0,0,0,0,0,0,0,0,
-                              0,0,0,0,0,0,0,0,0,0,
-                              0,0,0,0};
+uint16_t prevServoPulse[(4*SERVOS_COUNT)] ={0,0,0,0,0,0,0,0,0,0,
+                                                 0,0,0,0,0,0,0,0,0,0,
+                                                0,0,0,0,0,0,0,0,0,0,
+                                                0,0,0,0,0,0,0,0,0,0,
+                                                0,0,0,0,0,0,0,0,0,0,
+                                                0,0,0,0,0,0,0,0,0,0,
+                                                0,0,0,0,0,0,0,0,0,0,
+                                                0,0};
 
-uint16_t servoPulse[64] =    {
+uint16_t servoPulse[(4*SERVOS_COUNT)] =    {
                               SERVO_MIN_eyeLeftUD       ,
                               SERVO_MIN_eyeLeftLR       ,
                               SERVO_MIN_eyeRightUD      ,
@@ -243,28 +257,44 @@ uint16_t servoPulse[64] =    {
                               SERVO_MIN_eyelidRightLower,
                               SERVO_MIN_eyebrowRight    ,
                               SERVO_MIN_eyebrowLeft     ,
-                              SERVO_MIN_cheekRight      ,
-                              SERVO_MIN_cheekLeft       ,
+                              
+//                            SERVO_MIN_cheekRight      ,
+//                            SERVO_MIN_cheekLeft       ,
+
+                              SERVO_MIN_cheekRight_Upper,
+                              SERVO_MIN_cheekLeft_Upper ,
+
+                              SERVO_MIN_cheekRight_Lower,
+                              SERVO_MIN_cheekLeft_Lower ,
+
                               SERVO_MIN_upperLip        ,
                               SERVO_MIN_forheadRight    ,
                               SERVO_MIN_forheadLeft     ,
                               SERVO_MIN_Jaw_UpDown      ,
-                            SERVO_MID_eyeLeftUD       ,
-                            SERVO_MID_eyeLeftLR       ,
-                            SERVO_MID_eyeRightUD      ,
-                            SERVO_MID_eyeRightLR      ,
-                            SERVO_MID_eyelidLeftUpper ,
-                            SERVO_MID_eyelidLeftLower ,
-                            SERVO_MID_eyelidRightUpper,
-                            SERVO_MID_eyelidRightLower,
-                            SERVO_MID_eyebrowRight    ,
-                            SERVO_MID_eyebrowLeft     ,
-                            SERVO_MID_cheekRight      ,
-                            SERVO_MID_cheekLeft       ,
-                            SERVO_MID_upperLip        ,
-                            SERVO_MID_forheadRight    ,
-                            SERVO_MID_forheadLeft     ,
-                            SERVO_MID_Jaw_UpDown      ,
+                            SERVO_MID_eyeLeftUD         ,
+                            SERVO_MID_eyeLeftLR         ,
+                            SERVO_MID_eyeRightUD        ,
+                            SERVO_MID_eyeRightLR        ,
+                            SERVO_MID_eyelidLeftUpper   ,
+                            SERVO_MID_eyelidLeftLower   ,
+                            SERVO_MID_eyelidRightUpper  ,
+                            SERVO_MID_eyelidRightLower  ,
+                            SERVO_MID_eyebrowRight      ,
+                            SERVO_MID_eyebrowLeft       ,
+                              
+//                            SERVO_MIN_cheekRight      ,
+//                            SERVO_MIN_cheekLeft       ,
+
+                              SERVO_MIN_cheekRight_Upper,
+                              SERVO_MIN_cheekLeft_Upper ,
+
+                              SERVO_MIN_cheekRight_Lower,
+                              SERVO_MIN_cheekLeft_Lower ,
+
+                            SERVO_MID_upperLip          ,
+                            SERVO_MID_forheadRight      ,
+                            SERVO_MID_forheadLeft       ,
+                            SERVO_MID_Jaw_UpDown        ,
                               SERVO_MAX_eyeLeftUD       ,
                               SERVO_MAX_eyeLeftLR       ,
                               SERVO_MAX_eyeRightUD      ,
@@ -275,27 +305,43 @@ uint16_t servoPulse[64] =    {
                               SERVO_MAX_eyelidRightLower,
                               SERVO_MAX_eyebrowRight    ,
                               SERVO_MAX_eyebrowLeft     ,
-                              SERVO_MAX_cheekRight      ,
-                              SERVO_MAX_cheekLeft       ,
+                              
+//                            SERVO_MIN_cheekRight      ,
+//                            SERVO_MIN_cheekLeft       ,
+
+                              SERVO_MIN_cheekRight_Upper,
+                              SERVO_MIN_cheekLeft_Upper ,
+
+                              SERVO_MIN_cheekRight_Lower,
+                              SERVO_MIN_cheekLeft_Lower ,
+
                               SERVO_MAX_upperLip        ,
                               SERVO_MAX_forheadRight    ,
                               SERVO_MAX_forheadLeft     ,
                               SERVO_MAX_Jaw_UpDown      ,
-                            SERVO_MID_eyeLeftUD       ,
-                            SERVO_MID_eyeLeftLR       ,
-                            SERVO_MID_eyeRightUD      ,
-                            SERVO_MID_eyeRightLR      ,
-                            SERVO_MID_eyelidLeftUpper ,
-                            SERVO_MID_eyelidLeftLower ,
-                            SERVO_MID_eyelidRightUpper,
-                            SERVO_MID_eyelidRightLower,
-                            SERVO_MID_eyebrowRight    ,
-                            SERVO_MID_eyebrowLeft     ,
-                            SERVO_MID_cheekRight      ,
-                            SERVO_MID_cheekLeft       ,
-                            SERVO_MID_upperLip        ,
-                            SERVO_MID_forheadRight    ,
-                            SERVO_MID_forheadLeft     ,
+                            SERVO_MID_eyeLeftUD         ,
+                            SERVO_MID_eyeLeftLR         ,
+                            SERVO_MID_eyeRightUD        ,
+                            SERVO_MID_eyeRightLR        ,
+                            SERVO_MID_eyelidLeftUpper   ,
+                            SERVO_MID_eyelidLeftLower   ,
+                            SERVO_MID_eyelidRightUpper  ,
+                            SERVO_MID_eyelidRightLower  ,
+                            SERVO_MID_eyebrowRight      ,
+                            SERVO_MID_eyebrowLeft       ,
+                              
+//                            SERVO_MIN_cheekRight      ,
+//                            SERVO_MIN_cheekLeft       ,
+
+                              SERVO_MIN_cheekRight_Upper,
+                              SERVO_MIN_cheekLeft_Upper ,
+
+                              SERVO_MIN_cheekRight_Lower,
+                              SERVO_MIN_cheekLeft_Lower ,
+
+                            SERVO_MID_upperLip          ,
+                            SERVO_MID_forheadRight      ,
+                            SERVO_MID_forheadLeft       ,
                             SERVO_MID_Jaw_UpDown
                               };
 
@@ -321,7 +367,8 @@ const long interval_writeToDisplay = 350;
 
 
 #ifdef USE_PWM_DRIVER
-  Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
+  Adafruit_PWMServoDriver pwm1 = Adafruit_PWMServoDriver();
+  Adafruit_PWMServoDriver pwm2 = Adafruit_PWMServoDriver();
 #endif
 
 #ifdef USE_RF_REMOTE
@@ -363,16 +410,28 @@ void setup() {
 
 
   #ifdef USE_PWM_DRIVER
-    Serial.println("setup: pwd.begin()");
-    pwmAvailable = pwm.begin();
-    if(pwmAvailable) {
-      Serial.println("setup: OK PCA9685 PWM connected");
+    Serial.println("setup: pwd1.begin()");
+    pwm1Available = pwm1.begin();
+    if(pwm1Available) {
+      Serial.println("setup: OK PCA9685 PWM1 connected");
     } else {
-      Serial.println("setup: Looks like PCA9685 PWM driver is NOT connected!!!");
+      Serial.println("setup: Looks like PCA9685 PWM1 driver is NOT connected!!!");
     }
 
-    if(pwmAvailable) {
-      pwm.setPWMFreq(60); 
+    if(pwm1Available) {
+      pwm1.setPWMFreq(60); 
+    }
+
+    Serial.println("setup: pwd2.begin()");
+    pwm2Available = pwm2.begin();
+    if(pwm2Available) {
+      Serial.println("setup: OK PCA9685 PWM2 connected");
+    } else {
+      Serial.println("setup: Looks like PCA9685 PWM2 driver is NOT connected!!!");
+    }
+
+    if(pwm2Available) {
+      pwm2.setPWMFreq(60); 
     }
   #endif
 
@@ -446,29 +505,29 @@ void loop() {
       
       origAnalogValuePot0 = analogRead(pot0);
       analogValuePot0 = constrain(origAnalogValuePot0, 0, 1023);
-      servoIndexForAnalog = (((activeServoSet*LEFT_ARROW_STEP)) + (16 * 0));
+      servoIndexForAnalog = (((activeServoSet*LEFT_ARROW_STEP)) + (SERVOS_COUNT * 0));
 #ifdef SEND_FROM_0_TO_255 
-  servoPulse[((servoIndexForAnalog) + (16 * 3))] = 
+  servoPulse[((servoIndexForAnalog) + (SERVOS_COUNT * 3))] = 
     map (analogValuePot0, 0, 1023, 0, 255);
 #else
-  servoPulse[((servoIndexForAnalog) + (16 * 3))] = 
+  servoPulse[((servoIndexForAnalog) + (SERVOS_COUNT * 3))] = 
     (analogValuePot0)<512 ? 
-      (map(analogValuePot0,   0, 512, servoPulse[(servoIndexForAnalog)           ], servoPulse[(servoIndexForAnalog) + (16 * 1)]) ) 
-    : (map(analogValuePot0, 513, 1023, servoPulse[(servoIndexForAnalog) + (16 * 1)], servoPulse[(servoIndexForAnalog) + (16 * 2)]) );
+      (map(analogValuePot0,   0, 512, servoPulse[(servoIndexForAnalog)           ], servoPulse[(servoIndexForAnalog) + (SERVOS_COUNT * 1)]) ) 
+    : (map(analogValuePot0, 513, 1023, servoPulse[(servoIndexForAnalog) + (SERVOS_COUNT * 1)], servoPulse[(servoIndexForAnalog) + (SERVOS_COUNT * 2)]) );
 #endif
 /*
-servoPulse[((servoIndexForAnalog) + (16 * 3))] = 
+servoPulse[((servoIndexForAnalog) + (SERVOS_COUNT * 3))] = 
         (analogValuePot0)<128 ? 
-          (map(analogValuePot0,   0, 127, servoPulse[(servoIndexForAnalog)           ], servoPulse[(servoIndexForAnalog) + (16 * 1)]) ) 
-        : (map(analogValuePot0, 128, 255, servoPulse[(servoIndexForAnalog) + (16 * 1)], servoPulse[(servoIndexForAnalog) + (16 * 2)]) );
+          (map(analogValuePot0,   0, 127, servoPulse[(servoIndexForAnalog)           ], servoPulse[(servoIndexForAnalog) + (SERVOS_COUNT * 1)]) ) 
+        : (map(analogValuePot0, 128, 255, servoPulse[(servoIndexForAnalog) + (SERVOS_COUNT * 1)], servoPulse[(servoIndexForAnalog) + (SERVOS_COUNT * 2)]) );
 */
 
       if(abs(prevAnalogValuePot0 - analogValuePot0)>2) {
-        Serial.println("loop:origAnalogValuePot0 = "+String(origAnalogValuePot0)+", analogValuePot0 ="+String (analogValuePot0)+" servoPulse["+String(((servoIndexForAnalog) + (16 * 3)))+"] ="+String(servoPulse[((servoIndexForAnalog) + (16 * 3))])+".");
+        Serial.println("loop:origAnalogValuePot0 = "+String(origAnalogValuePot0)+", analogValuePot0 ="+String (analogValuePot0)+" servoPulse["+String(((servoIndexForAnalog) + (SERVOS_COUNT * 3)))+"] ="+String(servoPulse[((servoIndexForAnalog) + (SERVOS_COUNT * 3))])+".");
         prevAnalogValuePot0 = analogValuePot0;
       }
 
-      //servoPulse[(activeServoSet*LEFT_ARROW_STEP) + (16 * 3)] = analogRead(pot0); // map(analogRead(pot0), 0, 1023, 255, 0);
+      //servoPulse[(activeServoSet*LEFT_ARROW_STEP) + (SERVOS_COUNT * 3)] = analogRead(pot0); // map(analogRead(pot0), 0, 1023, 255, 0);
       RotEnc_EvaluateIncrement(&myEncMax1, RotEnc_Row1_MAX, ROTARY_DIVIDER, activeServoSet, LEFT_ARROW_STEP, LABEL_FORM_MAX);
   #endif
 
@@ -482,9 +541,14 @@ servoPulse[((servoIndexForAnalog) + (16 * 3))] =
   #endif
 
   #ifdef USE_PWM_DRIVER
-  if(pwmAvailable) {
+  if(pwm1Available) {
     //Using the servo driver board, set the active servos to the position  specified by the potentiometers
-    pwm.setPWM((activeServoSet*LEFT_ARROW_STEP)+0, 0, map(servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0], 0, 255, 0, 1023));
+    pwm1.setPWM((activeServoSet*LEFT_ARROW_STEP)+0, 0, map(servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0], 0, 255, 0, 1023));
+  }
+
+  if(pwm2Available) {
+    //Using the servo driver board, set the active servos to the position  specified by the potentiometers
+    pwm2.setPWM((activeServoSet*LEFT_ARROW_STEP)+0, 0, map(servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0], 0, 255, 0, 1023));
   }
   #endif  
   //delay(150);
@@ -495,7 +559,7 @@ int16_t RotEnc_EvaluateIncrement(Encoder *myEnc, uint16_t encoderIndex, uint16_t
     ////rotary encoder handling
     //--------------------------------------------------------------------------
     int16_t increment = 0;
-    uint16_t servoPulseIndex = (active_ServoSet * left_arrow_step) + (16 * Min_Mid_Max);
+    uint16_t servoPulseIndex = (active_ServoSet * left_arrow_step) + (SERVOS_COUNT * Min_Mid_Max);
   //uint16_t servoPulseIndex = (((active_ServoSet*LEFT_ARROW_STEP)+i)*4) + 16;
 
     newPosition[encoderIndex] = myEnc->read();
@@ -538,25 +602,28 @@ void loop_WriteTo_RF_Line (unsigned long currentMillis) {
 //-------end of loop_WriteTo_RF_Line----------------------------------------
 //-------end of loop_WriteTo_RF_Line----------------------------------------
 
-String i_str ="";
 void prepareServoForm(){
   Serial.println("setup: Write servo numbers 1.for {for{}} start");
+  servoNum = 0;
+  yPos = 2;
   //Write servo numbers 
-  for (uint8_t count = 0; count <= ((16/LEFT_ARROW_STEP) - 1); count ++){ 
-    for (uint8_t i = 0; i <=(LEFT_ARROW_STEP - 1); i ++){
+  for (uint8_t count = 0; count <= (SERVOS_COUNT - 1); count ++){ //ToDo here SERVOS_COUNT? SERVOS_ON_DISPLAY?
+  //for (uint8_t count = 0; count <= ((16/LEFT_ARROW_STEP) - 1); count ++){ //ToDo here SERVOS_COUNT? SERVOS_ON_DISPLAY?
+    //for (uint8_t i = 0; i <=(LEFT_ARROW_STEP - 1); i ++){
       char numRead[2];
-      char combined[30]= {0};
+      char combined_text[30]= {0};
       dtostrf(servoNum, 1, 0, numRead);
-      strcat(combined, servo);
-      strcat(combined, numRead);
-      tft.drawString(0, yPos, combined, WHITE);
+      strcat(combined_text, servo);
+      strcat(combined_text, numRead);
+      tft.drawString(0, yPos, combined_text, WHITE);
       //Serial.println("setup: y:"+String(yPos)+", combined:"+String(combined)+", colon:"+String(colon)+"count:"+String(count)+", i:"+String(i)+".");
-      tft.drawString((((strlen(servo) + 1)) * 8), yPos, colon, WHITE);    
+      //tft.drawString((((strlen(servo) + 1)) * 8), yPos, colon, WHITE);    
       servoNum ++;
-      yPos += spacing;    
-      }
-      yPos += (2*LEFT_ARROW_STEP); //8;
-    }
+      yPos += spacing;
+      //}
+      //yPos += (2*LEFT_ARROW_STEP); //8;
+    //}
+  }
   Serial.println("setup: 1.for {for{}} done");
 
   Serial.println("setup: Write initial servo positions (350 to start with)  2.for {for{}} started");
@@ -564,30 +631,35 @@ void prepareServoForm(){
   servoNum = 0;
   yPos = 2;
   //servo ="S".....
-  for (uint8_t count = 0; count <= ((16/LEFT_ARROW_STEP) - 1); count ++){ 
-    for (uint8_t i = 0; i <=(LEFT_ARROW_STEP - 1); i ++){
+  for (uint8_t count = 0; count <= (SERVOS_COUNT - 1); count ++){ //ToDo here SERVOS_COUNT? SERVOS_ON_DISPLAY?
+  //for (uint8_t count = 0; count <= ((16/LEFT_ARROW_STEP) - 1); count ++){ //ToDo here SERVOS_COUNT? SERVOS_ON_DISPLAY?
+    //for (uint8_t i = 0; i <=(LEFT_ARROW_STEP - 1); i ++){
         //char numRead[4];
         //dtostrf(servoPulse[servoNum], 4, 0, numRead);
         //tft.drawString((((strlen(servo) + 2)) * 8), yPos, numRead, YELLOW);
-        writeMINPulsesToDisplay((count*LEFT_ARROW_STEP)+i, servoPulse[servoNum], true);
+        //writeMINPulsesToDisplay((count*LEFT_ARROW_STEP)+i, servoPulse[servoNum], true);
+        writeMINPulsesToDisplay((count*LEFT_ARROW_STEP), servoPulse[servoNum], true);
 
         //char numRead2[4];
         //dtostrf(servoPulse[servoNum + 16], 4, 0, numRead2);
         //tft.drawString((((strlen(servo) + 2 + 4)) * 8), yPos, numRead2, YELLOW);
-        writeMIDPulsesToDisplay((count*LEFT_ARROW_STEP)+i, servoPulse[servoNum+16], true);
+        //writeMIDPulsesToDisplay((count*LEFT_ARROW_STEP)+i, servoPulse[servoNum+(SERVOS_COUNT)], true);
+        writeMIDPulsesToDisplay((count*LEFT_ARROW_STEP), servoPulse[servoNum+(SERVOS_COUNT)], true);
 
-        writeCurrPulsesToDisplay((count*LEFT_ARROW_STEP)+i, servoPulse[servoNum+48], true);
+        //writeCurrPulsesToDisplay((count*LEFT_ARROW_STEP)+i, servoPulse[servoNum+(SERVOS_COUNT*3)], true);
+        writeCurrPulsesToDisplay((count*LEFT_ARROW_STEP), servoPulse[servoNum+(SERVOS_COUNT*3)], true);
 
         //char numRead3[4];
         //dtostrf(servoPulse[servoNum + 32], 4, 0, numRead3);
         //tft.drawString((((strlen(servo) + 2 + 8)) * 8), yPos, numRead3, YELLOW);
-        writeMAXPulsesToDisplay((count*LEFT_ARROW_STEP)+i, servoPulse[servoNum+32], true);
+        //writeMAXPulsesToDisplay((count*LEFT_ARROW_STEP)+i, servoPulse[servoNum+32], true);
+        writeMAXPulsesToDisplay((count*LEFT_ARROW_STEP), servoPulse[servoNum+32], true);
         //Serial.print("prepareServoForm: y:"+String(yPos)+", count:"+String(count)+", i:"+String(i)+".");
-      i_str = String(i);
       servoNum ++;
       yPos += spacing;    
-      }
-    yPos += (2*LEFT_ARROW_STEP); //8;
+      //}
+    //yPos += (2*LEFT_ARROW_STEP); //8;
+  //}
   }
   Serial.println("setup: 2.for {for{}} done");
 
@@ -609,13 +681,13 @@ void ReadHwData() {
   mydata_send.servoSet = activeServoSet;
 
   mydata_send.s1min = servoPulse[ activeServoSet +  0];
-  mydata_send.s1mid = servoPulse[ activeServoSet + 16];
+  mydata_send.s1mid = servoPulse[ activeServoSet + (SERVOS_COUNT)];
 
-  mydata_send.s1max = servoPulse[ activeServoSet + 32];
+  mydata_send.s1max = servoPulse[ activeServoSet + (SERVOS_COUNT*2)];
 
-  mydata_send.s1curr= servoPulse[ activeServoSet + 48];
+  mydata_send.s1curr= servoPulse[ activeServoSet + (SERVOS_COUNT*3)];
   
-  mydata_send.devType =  2; // mode:  0 = fourSticksController (8 chanels) ,   1 = ServoConfigurator (16 chanels) , 2 = MinMaxServoConfig (min max for 2 chanels)
+  mydata_send.devType =  3; // mode:  0 = fourSticksController (8 chanels) ,   1 = ServoConfigurator (16 chanels) , 2 = MinMaxServoConfig (min max for 2 chanels), 3 = MinMaxServoConfig for 18 servos
   //mydata_send.flags = 0;
 
   mydata_send.switchPos = minMidMAXState;
@@ -657,22 +729,22 @@ void loop_writePulsesToDisplay (unsigned long currentMillis){
             prevServoPulse[servoPulseIndex] = servoPulse[servoPulseIndex];
           }
           
-          servoPulseIndex = (((activeServoSet*LEFT_ARROW_STEP)+i)) + 16;
+          servoPulseIndex = (((activeServoSet*LEFT_ARROW_STEP)+i)) + (SERVOS_COUNT);
           if(prevServoPulse[servoPulseIndex] != servoPulse[servoPulseIndex]) {
             data_changed = true;
             writeMIDPulsesToDisplay((activeServoSet*LEFT_ARROW_STEP)+i,servoPulse[servoPulseIndex]);
             prevServoPulse[servoPulseIndex] = servoPulse[servoPulseIndex];
           }
           //-------------------------------------------------------------
-          servoPulseIndex = (((activeServoSet*LEFT_ARROW_STEP)+i)) + 48;
+          servoPulseIndex = (((activeServoSet*LEFT_ARROW_STEP)+i)) + (SERVOS_COUNT*3);
           if(prevServoPulse[servoPulseIndex] != servoPulse[servoPulseIndex]) {
             data_changed = true;
             #ifdef SEND_FROM_0_TO_255
-              uint16_t origValue_0_255 = servoPulse[((servoIndexForAnalog) + (16 * 3))];
+              uint16_t origValue_0_255 = servoPulse[((servoIndexForAnalog) + (SERVOS_COUNT * 3))];
               uint16_t extrapolatedServoPulse_0_1023 = 
               (origValue_0_255)<128 ? 
-                (map(origValue_0_255,   0, 127, servoPulse[(servoIndexForAnalog)           ], servoPulse[(servoIndexForAnalog) + (16 * 1)]) ) 
-              : (map(origValue_0_255, 128, 255, servoPulse[(servoIndexForAnalog) + (16 * 1)], servoPulse[(servoIndexForAnalog) + (16 * 2)]) );
+                (map(origValue_0_255,   0, 127, servoPulse[(servoIndexForAnalog)           ], servoPulse[(servoIndexForAnalog) + (SERVOS_COUNT * 1)]) ) 
+              : (map(origValue_0_255, 128, 255, servoPulse[(servoIndexForAnalog) + (SERVOS_COUNT * 1)], servoPulse[(servoIndexForAnalog) + (SERVOS_COUNT * 2)]) );
 
               writeCurrPulsesToDisplay((activeServoSet*LEFT_ARROW_STEP)+i, extrapolatedServoPulse_0_1023);
             #else
@@ -728,16 +800,10 @@ void writeCurrPulsesToDisplay (uint8_t chanelNum, uint16_t SERVO_MAX){
   writeOneFieldToDisplay (chanelNum, 2, SERVO_MAX, false);
 }
 
-#define char_width_x 8
-
-#define char_height_y 8  
-#define char_shift_x  2
-#define chr_point_shift_x  1
-
 void writeOneFieldToDisplay (uint8_t chanelNum,uint8_t form_label_Min_Mid_Max, uint16_t servo_Pwm, bool showDebug){
   uint8_t modulo = chanelNum % LEFT_ARROW_STEP;
   uint8_t div_result =chanelNum / LEFT_ARROW_STEP;
-  uint8_t yPos = 2 + (div_result * ((LEFT_ARROW_STEP*8)+2)) + (modulo*8);
+  uint8_t yPos = 2 + (div_result * ((LEFT_ARROW_STEP*char_height_y)+0)) + (modulo*char_height_y); //ToDo here 8?  SERVOS_COUNT? SERVOS_ON_DISPLAY?
 
   if(showDebug == true) {
     Serial.print("writePulsesToDisplay: ");
@@ -808,14 +874,13 @@ void loop_servoSet_BTN_Select(unsigned long currentMillis){
       Serial.print("Button Up pressed. ");
       activeServoSet ++;
       Serial.print("activeServoSet = "+String(activeServoSet)+" ");
-      if (activeServoSet >((16/LEFT_ARROW_STEP) - 1)){
+      if (activeServoSet >((SERVOS_COUNT/LEFT_ARROW_STEP) - 1)){//ToDo here SERVOS_COUNT? SERVOS_ON_DISPLAY?
         activeServoSet = 0;
         Serial.print("activeServoSet reset.  to val "+String(activeServoSet)+" ");
       }
       Serial.println(" new activeServoSet ="+String(activeServoSet));
-      
-      tft.fillRect((128-(LEFT_ARROW_SIZE*8)), 0, (LEFT_ARROW_SIZE*8), 160, BLACK);
-      tft.drawString((128-(LEFT_ARROW_SIZE*8)), ((activeServoSet * ((2+8) * LEFT_ARROW_STEP))+3), "<", WHITE, LEFT_ARROW_SIZE);
+
+      draw_arrow(activeServoSet);
       delay(150);
     }
 
@@ -823,26 +888,24 @@ void loop_servoSet_BTN_Select(unsigned long currentMillis){
       Serial.print("Button Down pressed. old-activeServoSet ="+String(activeServoSet));
       activeServoSet --;
       if (activeServoSet < 0){
-        activeServoSet = 15;
+        activeServoSet = (SERVOS_COUNT)-1;
         Serial.println("activeServoSet reset.  to val "+String(activeServoSet)+". ");
       }
       Serial.println(" new activeServoSet ="+String(activeServoSet));
-      /*
-      if (activeServoSet <= 0){
-        activeServoSet = int(15);
-        activeServoSet = int(activeServoSet);
-        Serial.println("activeServoSet reset.  to val "+String(activeServoSet)+". ");
-      } else {
-        activeServoSet --;
-        activeServoSet =int(activeServoSet);
-        Serial.println(" new activeServoSet ="+String(activeServoSet));
-      }
-      */
 
-      tft.fillRect((128-(LEFT_ARROW_SIZE*8)), 0, (LEFT_ARROW_SIZE*8), 160, BLACK);
-      tft.drawString((128-(LEFT_ARROW_SIZE*8)), ((activeServoSet * ((8+2) * LEFT_ARROW_STEP))+3), "<", WHITE, LEFT_ARROW_SIZE);
+      draw_arrow(activeServoSet);
       delay(150);
     }
-    //ToDoHere;
+    //ToDoHere?;
   }
 }
+
+void draw_arrow(int16_t activeServoSet){
+      tft.fillRect((128-(LEFT_ARROW_SIZE*char_width_x)), 0, (LEFT_ARROW_SIZE*char_height_y), 160, BLACK);
+      tft.drawString((128-(LEFT_ARROW_SIZE*char_width_x)), ((activeServoSet * ((char_height_y+0) * LEFT_ARROW_STEP))+1), "<", WHITE, LEFT_ARROW_SIZE);
+
+}
+
+
+
+

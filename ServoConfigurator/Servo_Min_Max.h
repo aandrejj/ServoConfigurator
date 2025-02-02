@@ -40,12 +40,31 @@
 #define SERVO_MIN_eyebrowLeft       312
 #define SERVO_MID_eyebrowLeft       369
 #define SERVO_MAX_eyebrowLeft       454
-#define SERVO_MIN_cheekRight        326
-#define SERVO_MID_cheekRight        383
-#define SERVO_MAX_cheekRight        450
-#define SERVO_MIN_cheekLeft         338
-#define SERVO_MID_cheekLeft         420
-#define SERVO_MAX_cheekLeft         463
+
+//#define SERVO_MIN_cheekRight      326
+//#define SERVO_MID_cheekRight      383
+//#define SERVO_MAX_cheekRight      450
+
+//#define SERVO_MIN_cheekLeft       338
+//#define SERVO_MID_cheekLeft       420
+//#define SERVO_MAX_cheekLeft       463
+
+#define SERVO_MIN_cheekRight_Upper  326
+#define SERVO_MID_cheekRight_Upper  383
+#define SERVO_MAX_cheekRight_Upper  450
+
+#define SERVO_MIN_cheekLeft_Upper   338
+#define SERVO_MID_cheekLeft_Upper   420
+#define SERVO_MAX_cheekLeft_Upper   463
+
+#define SERVO_MIN_cheekRight_Lower  326
+#define SERVO_MID_cheekRight_Lower  383
+#define SERVO_MAX_cheekRight_Lower  450
+
+#define SERVO_MIN_cheekLeft_Lower   338
+#define SERVO_MID_cheekLeft_Lower   420
+#define SERVO_MAX_cheekLeft_Lower   463
+
 #define SERVO_MIN_upperLip          372
 #define SERVO_MID_upperLip          389
 #define SERVO_MAX_upperLip          393
