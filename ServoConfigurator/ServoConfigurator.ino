@@ -18,8 +18,6 @@
 #define  SEND_FROM_0_TO_255
 
 #define SERVOS_COUNT 18
-#define SERVOS_ON_DISPLAY 16
-
 
 #include "Servo_Min_Max.h"
 
@@ -607,8 +605,8 @@ void prepareServoForm(){
   servoNum = 0;
   yPos = 2;
   //Write servo numbers 
-  for (uint8_t count = 0; count <= (SERVOS_COUNT - 1); count ++){ //ToDo here SERVOS_COUNT? SERVOS_ON_DISPLAY?
-  //for (uint8_t count = 0; count <= ((16/LEFT_ARROW_STEP) - 1); count ++){ //ToDo here SERVOS_COUNT? SERVOS_ON_DISPLAY?
+  for (uint8_t count = 0; count <= (SERVOS_COUNT - 1); count ++){ 
+  //for (uint8_t count = 0; count <= ((16/LEFT_ARROW_STEP) - 1); count ++){ 
     //for (uint8_t i = 0; i <=(LEFT_ARROW_STEP - 1); i ++){
       char numRead[2];
       char combined_text[30]= {0};
@@ -631,8 +629,8 @@ void prepareServoForm(){
   servoNum = 0;
   yPos = 2;
   //servo ="S".....
-  for (uint8_t count = 0; count <= (SERVOS_COUNT - 1); count ++){ //ToDo here SERVOS_COUNT? SERVOS_ON_DISPLAY?
-  //for (uint8_t count = 0; count <= ((16/LEFT_ARROW_STEP) - 1); count ++){ //ToDo here SERVOS_COUNT? SERVOS_ON_DISPLAY?
+  for (uint8_t count = 0; count <= (SERVOS_COUNT - 1); count ++){ 
+  //for (uint8_t count = 0; count <= ((16/LEFT_ARROW_STEP) - 1); count ++){ 
     //for (uint8_t i = 0; i <=(LEFT_ARROW_STEP - 1); i ++){
         //char numRead[4];
         //dtostrf(servoPulse[servoNum], 4, 0, numRead);
@@ -803,7 +801,7 @@ void writeCurrPulsesToDisplay (uint8_t chanelNum, uint16_t SERVO_MAX){
 void writeOneFieldToDisplay (uint8_t chanelNum,uint8_t form_label_Min_Mid_Max, uint16_t servo_Pwm, bool showDebug){
   uint8_t modulo = chanelNum % LEFT_ARROW_STEP;
   uint8_t div_result =chanelNum / LEFT_ARROW_STEP;
-  uint8_t yPos = 2 + (div_result * ((LEFT_ARROW_STEP*char_height_y)+0)) + (modulo*char_height_y); //ToDo here 8?  SERVOS_COUNT? SERVOS_ON_DISPLAY?
+  uint8_t yPos = 2 + (div_result * ((LEFT_ARROW_STEP*char_height_y)+0)) + (modulo*char_height_y); 
 
   if(showDebug == true) {
     Serial.print("writePulsesToDisplay: ");
@@ -874,7 +872,7 @@ void loop_servoSet_BTN_Select(unsigned long currentMillis){
       Serial.print("Button Up pressed. ");
       activeServoSet ++;
       Serial.print("activeServoSet = "+String(activeServoSet)+" ");
-      if (activeServoSet >((SERVOS_COUNT/LEFT_ARROW_STEP) - 1)){//ToDo here SERVOS_COUNT? SERVOS_ON_DISPLAY?
+      if (activeServoSet >((SERVOS_COUNT/LEFT_ARROW_STEP) - 1)){
         activeServoSet = 0;
         Serial.print("activeServoSet reset.  to val "+String(activeServoSet)+" ");
       }
