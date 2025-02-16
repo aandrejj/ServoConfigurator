@@ -233,10 +233,10 @@ uint8_t previousFireBtnState = 0;
   bool pwm2Available = false;
 #endif
 
-//#define SERVOPULSE_ARRAY_SIZE  72
+//#define SERVOPULSE_ARRAY_SIZE  76
 //#define SERVOPULSE_CONVERSION_NEEDED
 uint16_t prevServoPulse[(4*SERVOS_COUNT)] ={0,0,0,0,0,0,0,0,0,0,
-                                                 0,0,0,0,0,0,0,0,0,0,
+                                                0,0,0,0,0,0,0,0,0,0,
                                                 0,0,0,0,0,0,0,0,0,0,
                                                 0,0,0,0,0,0,0,0,0,0,
                                                 0,0,0,0,0,0,0,0,0,0,
@@ -658,7 +658,7 @@ void prepareServoForm(){
         //dtostrf(servoPulse[servoNum + 32], 4, 0, numRead3);
         //tft.drawString((((strlen(servo) + 2 + 8)) * 8), yPos, numRead3, YELLOW);
         //writeMAXPulsesToDisplay((count*LEFT_ARROW_STEP)+i, servoPulse[servoNum+32], true);
-        writeMAXPulsesToDisplay((count*LEFT_ARROW_STEP), servoPulse[servoNum+32], true);
+        writeMAXPulsesToDisplay((count*LEFT_ARROW_STEP), servoPulse[servoNum+(SERVOS_COUNT*2)], true);
         //Serial.print("prepareServoForm: y:"+String(yPos)+", count:"+String(count)+", i:"+String(i)+".");
       servoNum ++;
       yPos += spacing;    
