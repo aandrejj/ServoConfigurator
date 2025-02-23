@@ -1,6 +1,12 @@
 #define LABEL_FORM_MIN 0
 #define LABEL_FORM_MID 1
-#define LABEL_FORM_MAX 2
+#define LABEL_FORM_MAX 3
+#define LABEL_FORM_CUR 2
+
+#define ARRAY_COLUMN_MIN 0
+#define ARRAY_COLUMN_MID 1
+#define ARRAY_COLUMN_MAX 2
+#define ARRAY_COLUMN_CUR 3
 
 #define RotEnc_Row1_MIN 0
 #define RotEnc_Row1_MID 1

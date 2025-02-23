@@ -98,7 +98,7 @@ MOSI D51
 MISO D50
 
  SCK, MOSI, MISO and CS (or SS) pins. Those pins are 52, 51, 50 and 53 (defalut) on a Mega.
-from: https://forum.arduino.cc/t/pin-connection/613444/4  
+from: https://forum.arduino.cc/t/pin-connection/613444/4   
 
 Hardware SPI Pins:
  * Arduino Uno   SCK=13, SDA=11
@@ -507,6 +507,7 @@ void loop() {
   #if defined(TREE_ENCODERS_ONE_POTENTIOMETER_IN_LINE)
       RotEnc_EvaluateIncrement(&myEncMin1, RotEnc_Row1_MIN, ROTARY_DIVIDER, activeServoSet, LEFT_ARROW_STEP, LABEL_FORM_MIN);
       RotEnc_EvaluateIncrement(&myEncMid1, RotEnc_Row1_MID, ROTARY_DIVIDER, activeServoSet, LEFT_ARROW_STEP, LABEL_FORM_MID);
+      RotEnc_EvaluateIncrement(&myEncMax1, RotEnc_Row1_MAX, ROTARY_DIVIDER, activeServoSet, LEFT_ARROW_STEP, LABEL_FORM_MAX);
       
       origAnalogValuePot0 = analogRead(pot0);
       analogValuePot0 = constrain(origAnalogValuePot0, 0, 1023);
@@ -531,9 +532,7 @@ servoPulse[((servoIndexForAnalog) + (SERVOS_COUNT * 3))] =
         Serial.println("loop:origAnalogValuePot0 = "+String(origAnalogValuePot0)+", analogValuePot0 ="+String (analogValuePot0)+" servoPulse["+String(((servoIndexForAnalog) + (SERVOS_COUNT * 3)))+"] ="+String(servoPulse[((servoIndexForAnalog) + (SERVOS_COUNT * 3))])+".");
         prevAnalogValuePot0 = analogValuePot0;
       }
-
       //servoPulse[(activeServoSet*LEFT_ARROW_STEP) + (SERVOS_COUNT * 3)] = analogRead(pot0); // map(analogRead(pot0), 0, 1023, 255, 0);
-      RotEnc_EvaluateIncrement(&myEncMax1, RotEnc_Row1_MAX, ROTARY_DIVIDER, activeServoSet, LEFT_ARROW_STEP, LABEL_FORM_MAX);
   #endif
 
 
@@ -578,14 +577,61 @@ int16_t RotEnc_EvaluateIncrement(Encoder *myEnc, uint16_t encoderIndex, uint16_t
           increment = 1;
           if(servoPulse[servoPulseIndex]<1023){ 
             servoPulse[servoPulseIndex] = servoPulse[servoPulseIndex] +1;
-            Serial.println("RotEnc_EvaluateIncrement [+] : active_ServoSet= "+String(active_ServoSet) + ", left_arrow_step = "+String(left_arrow_step)+", Min_Mid_Max = "+String(Min_Mid_Max)+", servoPulse["+String(servoPulseIndex)+"] = "+String(servoPulse[servoPulseIndex]));
+            Serial.print("RotEnc_EvaluateIncrement [+] : ");
+            Serial.print("active_ServoSet= "+String(active_ServoSet) + ", ");
+            Serial.print("left_arrow_step = "+String(left_arrow_step)+", ");
+            //Serial.print("Min_Mid_Max = "+String(Min_Mid_Max)+", ");
+            Serial.print("Min_Mid_Max= " + 
+                      String(
+                              (
+                                (Min_Mid_Max==LABEL_FORM_MIN) ? 
+                                ("MIN") : 
+                                (
+                                  (Min_Mid_Max==LABEL_FORM_MID) ? 
+                                  ("MID") :
+                                  (
+                                    (Min_Mid_Max==LABEL_FORM_MAX) ? 
+                                    ("MAX") : 
+                                    (
+                                      (Min_Mid_Max==LABEL_FORM_CUR) ? 
+                                      ("Cur"): 
+                                      (String(Min_Mid_Max))
+                                    )
+                                  )
+                                )
+                              )
+                            )+" , ");
+            Serial.println("servoPulse["+String(servoPulseIndex)+"] = "+String(servoPulse[servoPulseIndex]));
           }
         }
         if(newEncoderPosition[encoderIndex] < oldEncoderPosition[encoderIndex]) {
           increment = -1;
           if(servoPulse[servoPulseIndex]>0){
             servoPulse[servoPulseIndex] = servoPulse[servoPulseIndex] -1;
-            Serial.println("RotEnc_EvaluateIncrement -: active_ServoSet= "+String(active_ServoSet) + ", left_arrow_step = "+String(left_arrow_step)+", Min_Mid_Max = "+String(Min_Mid_Max)+", servoPulse["+String(servoPulseIndex)+"] = "+String(servoPulse[servoPulseIndex]));
+            Serial.println("RotEnc_EvaluateIncrement -: ");
+            Serial.print("active_ServoSet= "+String(active_ServoSet) + ", ");
+            Serial.print("left_arrow_step = "+String(left_arrow_step)+", ");
+            Serial.print("Min_Mid_Max= " + 
+                      String(
+                              (
+                                (Min_Mid_Max==LABEL_FORM_MIN) ? 
+                                ("MIN") : 
+                                (
+                                  (Min_Mid_Max==LABEL_FORM_MID) ? 
+                                  ("MID") :
+                                  (
+                                    (Min_Mid_Max==LABEL_FORM_MAX) ? 
+                                    ("MAX") : 
+                                    (
+                                      (Min_Mid_Max==LABEL_FORM_CUR) ? 
+                                      ("Cur"): 
+                                      (String(Min_Mid_Max))
+                                    )
+                                  )
+                                )
+                              )
+                            )+" , ");
+            Serial.println("servoPulse["+String(servoPulseIndex)+"] = "+String(servoPulse[servoPulseIndex]));
           }
         }
         oldEncoderPosition[encoderIndex] = newEncoderPosition[encoderIndex];
@@ -790,36 +836,59 @@ void writeMIDPulsesToDisplay (uint8_t chanelNum, uint16_t servo_Pwm, bool showDe
 }
 
 void writeMAXPulsesToDisplay (uint8_t chanelNum, uint16_t SERVO_MAX){
-  writeOneFieldToDisplay (chanelNum, LABEL_FORM_MAX+1, SERVO_MAX, false);
+  writeOneFieldToDisplay (chanelNum, LABEL_FORM_MAX, SERVO_MAX, false);
 }
 
 void writeMAXPulsesToDisplay (uint8_t chanelNum, uint16_t SERVO_MAX, bool showDebug){
-  writeOneFieldToDisplay (chanelNum, (LABEL_FORM_MAX+1) , SERVO_MAX, showDebug);
+  writeOneFieldToDisplay (chanelNum, (LABEL_FORM_MAX) , SERVO_MAX, showDebug);
 }
 
 void writeCurrPulsesToDisplay (uint8_t chanelNum, uint16_t SERVO_MAX, bool showDebug){
-  writeOneFieldToDisplay (chanelNum, 2, SERVO_MAX, showDebug);
+  writeOneFieldToDisplay (chanelNum, LABEL_FORM_CUR, SERVO_MAX, showDebug);
 }
 
 void writeCurrPulsesToDisplay (uint8_t chanelNum, uint16_t SERVO_MAX){
-  writeOneFieldToDisplay (chanelNum, 2, SERVO_MAX, false);
+  writeOneFieldToDisplay (chanelNum, LABEL_FORM_CUR, SERVO_MAX, false);
 }
 
 void writeOneFieldToDisplay (uint8_t chanelNum,uint8_t form_label_Min_Mid_Max, uint16_t servo_Pwm, bool showDebug){
   uint8_t modulo = chanelNum % LEFT_ARROW_STEP;
   uint8_t div_result =chanelNum / LEFT_ARROW_STEP;
   uint8_t yPos = 2 + (div_result * ((LEFT_ARROW_STEP*char_height_y)+0)) + (modulo*char_height_y); 
+  uint8_t xPos = (((char_shift_x + (form_label_Min_Mid_Max*3)) * char_width_x));
 
   if(showDebug == true) {
     Serial.print("writePulsesToDisplay: ");
-    Serial.print("chanelNum:"+String(chanelNum)+", form_label_Min_Mid_Max:"+String(form_label_Min_Mid_Max)+", servo_Pwm:"+String(servo_Pwm)+",  ");
+    Serial.print("chanelNum:"+String(chanelNum)+", ");
+    //Serial.print("form_label_Min_Mid_Max:"+String(form_label_Min_Mid_Max)+", ");
+    Serial.print("form_label_Min_Mid_Max= " + 
+              String(
+                      (
+                        (form_label_Min_Mid_Max==LABEL_FORM_MIN) ? 
+                        ("MIN") : 
+                        (
+                          (form_label_Min_Mid_Max==LABEL_FORM_MID) ? 
+                          ("MID") :
+                          (
+                            (form_label_Min_Mid_Max==LABEL_FORM_MAX) ? 
+                            ("MAX") : 
+                            (
+                              (form_label_Min_Mid_Max==LABEL_FORM_CUR) ? 
+                              ("Cur"): 
+                              (String(form_label_Min_Mid_Max))
+                            )
+                          )
+                        )
+                      )
+                    )+" , ");
+    Serial.print("servo_Pwm:"+String(servo_Pwm)+",  ");
     Serial.print("div_result = "+String(div_result)+", modulo = "+String(modulo)+", ");
+    Serial.print("xPos:"+String(xPos)+", ");
     Serial.println("yPos:"+String(yPos)+", ");
   } else {
     //Serial.println("writeOneFieldToDisplay: yPos:"+String(yPos)+", chanelNum:"+String(chanelNum)+", form_label_Min_Mid_Max:"+String(form_label_Min_Mid_Max)+", servo_Pwm:"+String(servo_Pwm)+", servoPulseIndex:"+String(servoPulseIndex));
   }
 
-  uint8_t xPos = (((char_shift_x + (form_label_Min_Mid_Max*3)) * char_width_x));
   writeOneFieldToDisplay_innerPart(xPos, chr_point_shift_x, yPos, char_height_y, form_label_Min_Mid_Max, servo_Pwm, chanelNum, showDebug);
 }
 
