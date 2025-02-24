@@ -1,0 +1,134 @@
+#include "Arduino.h"
+#include "WritePulsesToDisplay.h"
+
+#define char_width_x 8
+
+#define char_height_y 8  
+#define char_shift_x  2
+#define chr_point_shift_x  1
+
+WritePulsesToDisplay::WritePulsesToDisplay() {
+}
+
+void WritePulsesToDisplay::begin()//ST7735 *theTft)//, int servo_Limits[]) 
+{
+  Serial.println("WritePulsesToDisplay:begin");
+    //tft = theTft;
+
+
+    Serial.println("setup: tft.initR()...");
+    tft.initR();
+    delay(500);
+    //tft.initR(INITR_BLACKTAB); 
+
+    //tft.pushColor(uint16_t color)
+    //tft.pushColor(tft.Color565(RED,GREEN,BLUE));
+    //tft.fillScreen(BLACK);
+    //Set background colour
+    Serial.println("setup: tft.fillScreen(BLACK)");
+    tft.fillScreen(BLACK);
+    Serial.println("setup: BLACK =done");
+
+    Serial.println("WritePulsesToDisplay:End of begin().");
+}
+
+//---------------------------------------------------------------------
+void WritePulsesToDisplay::writeMINPulsesToDisplay (uint8_t chanelNum, uint16_t servo_Pwm, bool showDebug){
+  WritePulsesToDisplay::writeOneFieldToDisplay (chanelNum, LABEL_FORM_MIN, servo_Pwm, showDebug);  
+}
+void WritePulsesToDisplay::writeMINPulsesToDisplay (uint8_t chanelNum, uint16_t servo_Pwm){
+  WritePulsesToDisplay::writeOneFieldToDisplay (chanelNum, LABEL_FORM_MIN, servo_Pwm, false);  
+}
+
+
+void WritePulsesToDisplay::writeMIDPulsesToDisplay (uint8_t chanelNum, uint16_t servo_Pwm, bool showDebug){
+  WritePulsesToDisplay::writeOneFieldToDisplay (chanelNum, LABEL_FORM_MID, servo_Pwm, showDebug);
+}
+void WritePulsesToDisplay::writeMIDPulsesToDisplay (uint8_t chanelNum, uint16_t servo_Pwm){
+  WritePulsesToDisplay::writeOneFieldToDisplay (chanelNum, LABEL_FORM_MID, servo_Pwm, false);
+}
+
+void WritePulsesToDisplay::writeMAXPulsesToDisplay (uint8_t chanelNum, uint16_t servo_Pwm, bool showDebug){
+  WritePulsesToDisplay::writeOneFieldToDisplay (chanelNum, (LABEL_FORM_MAX) , servo_Pwm, showDebug);
+}
+
+void WritePulsesToDisplay::writeMAXPulsesToDisplay (uint8_t chanelNum, uint16_t servo_Pwm){
+  WritePulsesToDisplay::writeOneFieldToDisplay (chanelNum, LABEL_FORM_MAX, servo_Pwm, false);
+}
+
+void WritePulsesToDisplay::writeCurrPulsesToDisplay (uint8_t chanelNum, uint16_t servo_Pwm, bool showDebug){
+  WritePulsesToDisplay::writeOneFieldToDisplay (chanelNum, LABEL_FORM_CUR, servo_Pwm, showDebug);
+}
+
+void WritePulsesToDisplay::writeCurrPulsesToDisplay (uint8_t chanelNum, uint16_t servo_Pwm){
+  WritePulsesToDisplay::writeOneFieldToDisplay (chanelNum, LABEL_FORM_CUR, servo_Pwm, false);
+}
+
+void WritePulsesToDisplay::writeOneFieldToDisplay (uint8_t chanelNum,uint8_t form_label_Min_Mid_Max, uint16_t servo_Pwm, bool showDebug){
+  uint8_t modulo = chanelNum % LEFT_ARROW_STEP;
+  uint8_t div_result =chanelNum / LEFT_ARROW_STEP;
+  uint8_t yPos = 2 + (div_result * ((LEFT_ARROW_STEP*char_height_y)+0)) + (modulo*char_height_y); 
+  uint8_t xPos = (((char_shift_x + (form_label_Min_Mid_Max*3)) * char_width_x));
+
+  if(showDebug == true) {
+    Serial.print("writePulsesToDisplay: ");
+    Serial.print("chanelNum:"+String(chanelNum)+", ");
+    //Serial.print("form_label_Min_Mid_Max:"+String(form_label_Min_Mid_Max)+", ");
+    Serial.print("form_label_Min_Mid_Max= " + 
+              String(
+                      (
+                        (form_label_Min_Mid_Max==LABEL_FORM_MIN) ? 
+                        ("MIN") : 
+                        (
+                          (form_label_Min_Mid_Max==LABEL_FORM_MID) ? 
+                          ("MID") :
+                          (
+                            (form_label_Min_Mid_Max==LABEL_FORM_MAX) ? 
+                            ("MAX") : 
+                            (
+                              (form_label_Min_Mid_Max==LABEL_FORM_CUR) ? 
+                              ("Cur"): 
+                              (String(form_label_Min_Mid_Max))
+                            )
+                          )
+                        )
+                      )
+                    )+" , ");
+    Serial.print("servo_Pwm:"+String(servo_Pwm)+",  ");
+    Serial.print("div_result = "+String(div_result)+", modulo = "+String(modulo)+", ");
+    Serial.print("xPos:"+String(xPos)+", ");
+    Serial.println("yPos:"+String(yPos)+", ");
+  } else {
+    //Serial.println("writeOneFieldToDisplay: yPos:"+String(yPos)+", chanelNum:"+String(chanelNum)+", form_label_Min_Mid_Max:"+String(form_label_Min_Mid_Max)+", servo_Pwm:"+String(servo_Pwm)+", servoPulseIndex:"+String(servoPulseIndex));
+  }
+
+  writeOneFieldToDisplay_innerPart(xPos, chr_point_shift_x, yPos, char_height_y, form_label_Min_Mid_Max, servo_Pwm, chanelNum, showDebug);
+}
+
+
+void WritePulsesToDisplay::writeOneFieldToDisplay_innerPart (uint8_t xPos, uint16_t _chr_point_shift_x, uint8_t yPos, uint16_t _char_height_y, uint16_t form_label_Min_Mid_Max, uint16_t servo_Pwm,uint16_t chanelNum, bool showDebug)
+{
+  //uint8_t modulo2 = (chanelNum + form_label_Min_Mid_Max)%2;
+    //if(modulo2 ==0) 
+    //{
+      tft.fillRect((xPos + _chr_point_shift_x), yPos, (3*char_width_x)-_chr_point_shift_x, _char_height_y, BLACK);
+    //} else {
+    //    tft.fillRect((xPos + _chr_point_shift_x), yPos, (3*char_width_x)-_chr_point_shift_x, _char_height_y, WHITE);
+    //}
+    char numRead3[4];
+    dtostrf(servo_Pwm, 4, 0, numRead3);
+    tft.drawString(xPos, yPos, numRead3, YELLOW);
+}
+
+
+void WritePulsesToDisplay::writeArrow_activeServoSet (byte activeServoSet) {
+//void draw_arrow(int16_t activeServoSet){
+      tft.fillRect((128-(LEFT_ARROW_SIZE*char_width_x)), 0, (LEFT_ARROW_SIZE*char_height_y), 160, BLACK);
+      tft.drawString((128-(LEFT_ARROW_SIZE*char_width_x)), ((activeServoSet * ((char_height_y+0) * LEFT_ARROW_STEP))+1), "<", WHITE, LEFT_ARROW_SIZE);
+
+}
+
+void WritePulsesToDisplay::drawString(uint8_t x, uint8_t y, char *c, uint16_t color, uint8_t size=1) {
+  //Serial.println("WritePulsesToDisplay::drawString: x="+String(x)+", y="+String(y)+", *c="+String(c)+", color="+String(color)+", size="+String(size)+".");
+  tft.drawString(x, y, c, color, size);
+}
