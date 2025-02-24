@@ -75,12 +75,6 @@ const unsigned char completeVersion[] =
 #define LEFT_ARROW_SIZE  1
 #define LEFT_ARROW_STEP  1
 
-  //           ST7735(uint8_t CS, uint8_t RS, uint8_t SID, uint8_t SCLK, uint8_t RST);
-  ST7735 tft = ST7735(   DISP_CS,    DISP_RS,    DISP_SID,    DISP_SCLK,    DISP_RST); 
-//ST7735 tft = ST7735(         6,          7,          11,           13,           8); 
-  //           ST7735(uint8_t CS, uint8_t RS, uint8_t RST);
-//ST7735 tft = ST7735(6, 7, 8);    
-
 #ifdef USE_RF_REMOTE
   const uint64_t my_radio_pipe = 0x0022; //tento istý kód musí mať aj prijímač
   /*
@@ -661,7 +655,9 @@ void prepareServoForm(){
       dtostrf(servoNum, 1, 0, numRead);
       strcat(combined_text, servo);
       strcat(combined_text, numRead);
-      tft.drawString(0, yPos, combined_text, WHITE);
+      //tft.drawString(0, yPos, combined_text, WHITE);
+      writePulsesToDisplay.drawString(0, yPos, combined_text, WHITE);
+
 
       servoNum ++;
       yPos += spacing;
@@ -686,7 +682,8 @@ void prepareServoForm(){
   }
   Serial.println("setup: 2.for {for{}} done");
 
-  tft.drawString((128-(LEFT_ARROW_SIZE*8)), 3, "<", WHITE, LEFT_ARROW_SIZE);
+  writePulsesToDisplay.writeArrow_activeServoSet (0);
+  //tft.drawString((128-(LEFT_ARROW_SIZE*8)), 3, "<", WHITE, LEFT_ARROW_SIZE);
 }
 
 void servopulse_initial_conversion() {
