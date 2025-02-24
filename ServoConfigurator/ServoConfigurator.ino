@@ -42,28 +42,7 @@
 #include "RxTx_dataStructures.h"
 
 // want something like: 0.2.20241124.1502
-const unsigned char completeVersion[] =
-{
-    VERSION_MAJOR_INIT,
-    '.',
-    VERSION_MINOR_INIT,
-    //'-', 'V', '-',
-    '.',
-    BUILD_YEAR_CH0, BUILD_YEAR_CH1, BUILD_YEAR_CH2, BUILD_YEAR_CH3,
-    //'-',
-    BUILD_MONTH_CH0, BUILD_MONTH_CH1,
-    //'-',
-    BUILD_DAY_CH0, BUILD_DAY_CH1,
-    //'T',
-      '.',
-    BUILD_HOUR_CH0, BUILD_HOUR_CH1,
-    //':',
-    BUILD_MIN_CH0, BUILD_MIN_CH1,
-    //':',
-    //BUILD_SEC_CH0, BUILD_SEC_CH1,
-    '\0'
-};
-
+#include "completeVersion.h"
 
 
 //#define OLED_RESET 4
@@ -504,49 +483,39 @@ void loop() {
       origAnalogValuePot0 = analogRead(pot0);
       analogValuePot0 = constrain(origAnalogValuePot0, 0, 1023);
       servoIndexForAnalog = (((activeServoSet*LEFT_ARROW_STEP)) + (SERVOS_COUNT * 0));
-#ifdef SEND_FROM_0_TO_255 
-  servoPulse[((servoIndexForAnalog) + (SERVOS_COUNT * 3))] = 
-    map (analogValuePot0, 0, 1023, 0, 255);
-#else
-  servoPulse[((servoIndexForAnalog) + (SERVOS_COUNT * 3))] = 
-    (analogValuePot0)<512 ? 
-      (map(analogValuePot0,   0, 512, servoPulse[(servoIndexForAnalog)           ], servoPulse[(servoIndexForAnalog) + (SERVOS_COUNT * 1)]) ) 
-    : (map(analogValuePot0, 513, 1023, servoPulse[(servoIndexForAnalog) + (SERVOS_COUNT * 1)], servoPulse[(servoIndexForAnalog) + (SERVOS_COUNT * 2)]) );
-#endif
-/*
-servoPulse[((servoIndexForAnalog) + (SERVOS_COUNT * 3))] = 
-        (analogValuePot0)<128 ? 
-          (map(analogValuePot0,   0, 127, servoPulse[(servoIndexForAnalog)           ], servoPulse[(servoIndexForAnalog) + (SERVOS_COUNT * 1)]) ) 
-        : (map(analogValuePot0, 128, 255, servoPulse[(servoIndexForAnalog) + (SERVOS_COUNT * 1)], servoPulse[(servoIndexForAnalog) + (SERVOS_COUNT * 2)]) );
-*/
-
+    #ifdef SEND_FROM_0_TO_255 
+      servoPulse[((servoIndexForAnalog) + (SERVOS_COUNT * 3))] = 
+      map (analogValuePot0, 0, 1023, 0, 255);
+    #else
+      servoPulse[((servoIndexForAnalog) + (SERVOS_COUNT * 3))] = 
+        (analogValuePot0)<512 ? 
+          (map(analogValuePot0,   0, 512, servoPulse[(servoIndexForAnalog)           ], servoPulse[(servoIndexForAnalog) + (SERVOS_COUNT * 1)]) ) 
+        : (map(analogValuePot0, 513, 1023, servoPulse[(servoIndexForAnalog) + (SERVOS_COUNT * 1)], servoPulse[(servoIndexForAnalog) + (SERVOS_COUNT * 2)]) );
+    #endif
       if(abs(prevAnalogValuePot0 - analogValuePot0)>2) {
         Serial.println("loop:origAnalogValuePot0 = "+String(origAnalogValuePot0)+", analogValuePot0 ="+String (analogValuePot0)+" servoPulse["+String(((servoIndexForAnalog) + (SERVOS_COUNT * 3)))+"] ="+String(servoPulse[((servoIndexForAnalog) + (SERVOS_COUNT * 3))])+".");
         prevAnalogValuePot0 = analogValuePot0;
       }
-      //servoPulse[(activeServoSet*LEFT_ARROW_STEP) + (SERVOS_COUNT * 3)] = analogRead(pot0); // map(analogRead(pot0), 0, 1023, 255, 0);
   #endif
 
-
-  //Clear the previous number, and write the new pulsewidths for the active servo set to the monitor
-  loop_writePulsesToDisplay(currentMillis); //here
+      //Clear the previous number, and write the new pulsewidths for the active servo set to the monitor
+      loop_writePulsesToDisplay(currentMillis); //here
   
   #ifdef USE_RF_REMOTE
-    loop_WriteTo_RF_Line(currentMillis);
+      loop_WriteTo_RF_Line(currentMillis);
   #endif
 
   #ifdef USE_PWM_DRIVER
-  if(pwm1Available) {
-    //Using the servo driver board, set the active servos to the position  specified by the potentiometers
-    pwm1.setPWM((activeServoSet*LEFT_ARROW_STEP)+0, 0, map(servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0], 0, 255, 0, 1023));
-  }
+      if(pwm1Available) {
+        //Using the servo driver board, set the active servos to the position  specified by the potentiometers
+        pwm1.setPWM((activeServoSet*LEFT_ARROW_STEP)+0, 0, map(servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0], 0, 255, 0, 1023));
+      }
 
-  if(pwm2Available) {
-    //Using the servo driver board, set the active servos to the position  specified by the potentiometers
-    pwm2.setPWM((activeServoSet*LEFT_ARROW_STEP)+0, 0, map(servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0], 0, 255, 0, 1023));
-  }
+      if(pwm2Available) {
+        //Using the servo driver board, set the active servos to the position  specified by the potentiometers
+        pwm2.setPWM((activeServoSet*LEFT_ARROW_STEP)+0, 0, map(servoPulse[(activeServoSet*LEFT_ARROW_STEP)+0], 0, 255, 0, 1023));
+      }
   #endif  
-  //delay(150);
 }
 
 int16_t RotEnc_EvaluateIncrement(Encoder *myEnc, uint16_t encoderIndex, uint16_t divider, uint16_t active_ServoSet, uint16_t left_arrow_step, uint16_t Min_Mid_Max) {
@@ -670,13 +639,13 @@ void prepareServoForm(){
   yPos = 2;
   //servo ="S".....
   for (uint8_t count = 0; count <= (SERVOS_COUNT - 1); count ++){ 
-        writePulsesToDisplay.writeMINPulsesToDisplay((count*LEFT_ARROW_STEP), servoPulse[servoNum], true);
+        writePulsesToDisplay.writeMINPulsesToDisplay( (count*LEFT_ARROW_STEP), servoPulse[servoNum                 ], true);
 
-        writePulsesToDisplay.writeMIDPulsesToDisplay((count*LEFT_ARROW_STEP), servoPulse[servoNum+(SERVOS_COUNT)], true);
+        writePulsesToDisplay.writeMIDPulsesToDisplay( (count*LEFT_ARROW_STEP), servoPulse[servoNum+(SERVOS_COUNT)  ], true);
 
         writePulsesToDisplay.writeCurrPulsesToDisplay((count*LEFT_ARROW_STEP), servoPulse[servoNum+(SERVOS_COUNT*3)], true);
 
-        writePulsesToDisplay.writeMAXPulsesToDisplay((count*LEFT_ARROW_STEP), servoPulse[servoNum+(SERVOS_COUNT*2)], true);
+        writePulsesToDisplay.writeMAXPulsesToDisplay( (count*LEFT_ARROW_STEP), servoPulse[servoNum+(SERVOS_COUNT*2)], true);
       servoNum ++;
       yPos += spacing;    
   }
